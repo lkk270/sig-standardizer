@@ -1,0 +1,4 @@
+pytesseract==0.3.10
+Pillow==10.2.0
+pytest==7.4.3  # for testing
+black==23.12.1  # for formatting 
