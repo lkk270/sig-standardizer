@@ -49,59 +49,37 @@ export const FileUploadForm = ({
 
 	const handleUpload = async (isForRetry = false) => {
 		if (isLoading || !file) return;
-
-		if (file.status === "canceled") {
-			file.controller = new AbortController();
-		}
 		setIsLoading(true);
 
 		try {
 			updateFileStatus("uploading");
 
-			let body = {
-				fileName: file.file.name,
-				contentType: file.file.type,
-				size: file.file.size,
-				accessToken: requestRecordsCode?.token,
-			};
-
-			const response = await fetch(
-				!!requestRecordsCode ? "/api/rr-file-upload" : "/api/tpa-file-upload",
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(body),
-					signal: file.controller.signal,
-				}
-			);
-
-			updateFileStatus("gotPSU");
-			const { url, fields, fileIdResponse, parentFolderNameResponse } =
-				await response.json();
-
-			const formData = new FormData();
-			Object.entries(fields).forEach(([key, value]) => {
-				formData.append(key, value as string);
+			// Convert file to base64
+			const base64 = await new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.readAsDataURL(file.file);
+				reader.onload = () => resolve(reader.result);
+				reader.onerror = (error) => reject(error);
 			});
-			formData.append("file", file.file as any);
 
-			const uploadResponse = await fetch(url, {
+			const response = await fetch(process.env.NEXT_PUBLIC_LAMBDA_URL!, {
 				method: "POST",
-				body: formData,
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					image: base64,
+				}),
 			});
 
-			if (!uploadResponse.ok) throw new Error(`File upload to storage failed.`);
+			if (!response.ok) throw new Error("Failed to process image");
 
+			const data = await response.json();
+			console.log("Extracted text:", data.text);
 			updateFileStatus("uploaded");
 		} catch (error: any) {
-			if (
-				error.toString().includes("signal is aborted") ||
-				error.toString().includes("The user aborted a request")
-			) {
-				updateFileStatus("canceled");
-			} else {
-				updateFileStatus("error");
-			}
+			console.error(error);
+			updateFileStatus("error");
 		}
 
 		setIsLoading(false);
