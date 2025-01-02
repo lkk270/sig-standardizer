@@ -6,7 +6,7 @@ import {
 	CardFooter,
 	CardHeader,
 } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Trash, RefreshCw, XCircle } from "lucide-react";
 import { Dropzone } from "@/components/file-upload/dropzone";
 import { FileWithStatus } from "@/app/types";
@@ -15,10 +15,12 @@ import { cn, formatFileSize } from "@/lib/utils";
 // import { Separator } from "@/components/ui/separator";
 import { useIsLoading } from "@/hooks/use-is-loading";
 import { Button } from "@/components/ui/button";
+import { extractText } from "@/app/(landing)/actions/extract-text";
 
 export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
 	const { isLoading, setIsLoading } = useIsLoading();
+	const [isPending, startTransition] = useTransition();
 
 	const updateFileStatus = (
 		status: "uploaded" | "error" | "canceled" | "uploading" | "gotPSU"
@@ -31,41 +33,32 @@ export const FileUploadForm = () => {
 	const handleUpload = async () => {
 		if (isLoading || !file) return;
 		setIsLoading(true);
+		updateFileStatus("uploading");
 
-		try {
-			updateFileStatus("uploading");
-
-			// Convert file to base64
-			const base64 = await new Promise((resolve, reject) => {
-				const reader = new FileReader();
-				reader.readAsDataURL(file.file);
-				reader.onload = () => resolve(reader.result);
-				reader.onerror = (error) => reject(error);
+		new Promise<string>((resolve, reject) => {
+			const reader = new FileReader();
+			reader.readAsDataURL(file.file);
+			reader.onload = () => resolve(reader.result as string);
+			reader.onerror = reject;
+		})
+			.then((base64) => {
+				startTransition(async () => {
+					const result = await extractText(base64);
+					console.log(result);
+					if (!result.success) {
+						throw new Error(result.error);
+					}
+					console.log("Extracted text:", result.text);
+					updateFileStatus("uploaded");
+				});
+			})
+			.catch((error) => {
+				console.error("Error:", error);
+				updateFileStatus("error");
+			})
+			.finally(() => {
+				setIsLoading(false);
 			});
-
-			const response = await fetch(process.env.NEXT_PUBLIC_LAMBDA_URL!, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					image: base64,
-				}),
-			});
-
-			if (!response.ok) throw new Error("Failed to process image");
-
-			const data = await response.json();
-			console.log("Extracted text:", data.text);
-			updateFileStatus("uploaded");
-		} catch (
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			error
-		) {
-			updateFileStatus("error");
-		}
-
-		setIsLoading(false);
 	};
 
 	const handleRemoveFile = () => {

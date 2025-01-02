@@ -1,45 +1,115 @@
-name: Deploy Lambda
+name: Deploy Lambda Functions
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'lambda/**'
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./lambda
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt -t ./package
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-    - name: Create deployment package
-      run: |
-        cd package
-        zip -r ../function.zip .
-        cd ..
-        zip -g function.zip src/main.py
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+      - name: Create deployment packages
+        run: |
+          for func in extract standardize; do
+            echo "Creating package for $func function..."
+            
+            # Create fresh package directory
+            rm -rf package
+            mkdir -p package
 
-    - name: Deploy to Lambda
-      run: |
-        aws lambda update-function-code --function-name extract-text --zip-file fileb://function.zip
+            # Install dependencies with platform-specific binaries
+            pip install --target ./package \
+                --platform manylinux2014_x86_64 \
+                --implementation cp \
+                --python-version 3.9 \
+                --only-binary=:all: \
+                pillow pytesseract
+
+            # Copy source file
+            cp src/$func.py package/$func.py
+
+            # Create zip file
+            cd package
+            zip -r ../${func}_function.zip .
+            cd ..
+
+            echo "Created ${func}_function.zip"
+            ls -lh ${func}_function.zip
+          done
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure
+          terraform init
+
+      - name: Terraform Plan
+        id: terraform_plan
+        run: |
+          cd infrastructure
+          terraform plan -out=tfplan \
+            -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
+        continue-on-error: true
+
+      - name: Check Terraform Plan Exit Code
+        run: |
+          if [ -s infrastructure/tfplan ]; then
+            echo "Terraform plan succeeded with changes."
+            echo "apply_plan=true" >> $GITHUB_ENV
+          else
+            echo "No changes detected or plan failed."
+            echo "apply_plan=false" >> $GITHUB_ENV
+          fi
+
+      - name: Terraform Apply
+        if: env.apply_plan == 'true'
+        run: |
+          cd infrastructure
+          terraform apply -auto-approve tfplan
+
+      - name: Create Tesseract layer
+        run: |
+          mkdir -p lambda-layer/python
+          mkdir -p lambda-layer/lib
+          
+          docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
+            bash -c "
+              yum install -y tesseract tesseract-langpack-eng
+              yum install -y libstdc++ libgomp libtiff libpng libjpeg
+              
+              mkdir -p /layer/lib
+              cp /usr/bin/tesseract /layer/lib/
+              cp -r /usr/share/tesseract /layer/lib/
+              cp -r /usr/lib64/libtesseract* /layer/lib/
+              cp -r /usr/lib64/liblept* /layer/lib/
+              cp -r /usr/lib64/libpng* /layer/lib/
+              cp -r /usr/lib64/libtiff* /layer/lib/
+              cp -r /usr/lib64/libjpeg* /layer/lib/
+              cp -r /usr/lib64/libwebp* /layer/lib/
+              cp -r /usr/lib64/libgomp* /layer/lib/
+              cp -r /usr/lib64/libstdc++* /layer/lib/
+              
+              chmod 755 /layer/lib/*
+            "
+          
+          cd lambda-layer
+          zip -r ../tesseract-layer.zip .
+          cd ..
