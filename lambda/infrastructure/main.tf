@@ -33,7 +33,9 @@ resource "aws_lambda_function" "extract_text" {
   runtime         = "python3.9"
   timeout         = 30
   memory_size     = 512
-  force_destroy   = true
+  
+  # Force update when code changes
+  source_code_hash = filebase64sha256("../function.zip")
 
   layers = [aws_lambda_layer_version.tesseract.arn]
 
@@ -54,7 +56,9 @@ resource "aws_lambda_function" "standardize_text" {
   runtime      = "python3.9"
   timeout      = 60
   memory_size  = 1024
-  force_destroy = true
+  
+  # Force update when code changes
+  source_code_hash = filebase64sha256("../standardize_function.zip")
 
   environment {
     variables = {
