@@ -24,8 +24,6 @@ export function Dropzone({
 	// Initialize state variables using the useState hook
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const [isOverArea, setIsOverArea] = useState(false);
-	const [fileInfo, setFileInfo] = useState<File[]>([]);
-	const [error, setError] = useState<string | null>(null);
 	const title = "Click or drag a JPEG/JPG or PNG to this area to upload";
 
 	// Function to handle drag over event
@@ -67,7 +65,7 @@ export function Dropzone({
 	const handleFiles = (files: FileList) => {
 		const maxSize = 10485760;
 		const maxSizeError = "10 Mb";
-		let newFiles: FileWithStatus[] = []; // Define as array of FileWithStatus
+		const newFiles: FileWithStatus[] = []; // Define as array of FileWithStatus
 		for (let i = 0; i < files.length; i++) {
 			if (files[i].size > maxSize) {
 				// Optionally, alert the user that the file is too large
@@ -80,10 +78,7 @@ export function Dropzone({
 			// Convert each File into a FileWithStatus object
 			newFiles.push({ file: file, controller: new AbortController() });
 		}
-		setFileInfo((prevFiles) => [
-			...newFiles.map((fws) => fws.file),
-			...prevFiles,
-		]);
+
 		if (onChangeSingleFile) {
 			const file = newFiles[0];
 			if (
@@ -100,7 +95,6 @@ export function Dropzone({
 				onChangeSingleFile(file);
 			}
 		}
-		setError(null);
 	};
 
 	const handleButtonClick = () => {

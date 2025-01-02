@@ -12,30 +12,11 @@ import { Dropzone } from "@/components/file-upload/dropzone";
 import { FileWithStatus } from "@/app/types";
 import { Spinner } from "@/components/reusable/spinner";
 import { cn, formatFileSize } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import { useIsLoading } from "@/hooks/use-is-loading";
 import { Button } from "@/components/ui/button";
 
-interface UploadFilesFormProps {
-	requestRecordsCode?: {
-		id: string;
-		userId: string;
-		createdAt: Date;
-		parentFolderId: string;
-		hasUploaded: boolean;
-		token: string;
-		expires: Date;
-		isValid: boolean;
-		providerEmail: string;
-	};
-}
-
-export const FileUploadForm = ({
-	requestRecordsCode,
-}: UploadFilesFormProps) => {
-	const [calledSetHasUploadToTrue, setCalledSetHasUploadToTrue] = useState(
-		requestRecordsCode?.hasUploaded
-	);
+export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
 	const { isLoading, setIsLoading } = useIsLoading();
 
@@ -47,7 +28,7 @@ export const FileUploadForm = ({
 		}
 	};
 
-	const handleUpload = async (isForRetry = false) => {
+	const handleUpload = async () => {
 		if (isLoading || !file) return;
 		setIsLoading(true);
 
@@ -77,8 +58,7 @@ export const FileUploadForm = ({
 			const data = await response.json();
 			console.log("Extracted text:", data.text);
 			updateFileStatus("uploaded");
-		} catch (error: any) {
-			console.error(error);
+		} catch (error) {
 			updateFileStatus("error");
 		}
 
@@ -97,14 +77,7 @@ export const FileUploadForm = ({
 
 	return (
 		<Card className="flex flex-col h-72 max-w-full w-full border border-primary/10 rounded-xl overflow-hidden">
-			<div
-				className={cn(
-					"w-full grid",
-					requestRecordsCode && calledSetHasUploadToTrue
-						? "grid-cols-2"
-						: "grid-cols-1"
-				)}
-			></div>
+			<div className={cn("w-full grid")}></div>
 			<div className="flex justify-center w-full">
 				<CardContent className="flex flex-col flex-grow justify-center max-w-[800px] w-full">
 					<CardHeader>
@@ -129,7 +102,7 @@ export const FileUploadForm = ({
 											title="retry"
 											role="button"
 											className="flex-shrink-0 pr-2"
-											onClick={() => handleUpload(true)}
+											onClick={handleUpload}
 										>
 											<RefreshCw className="w-4 h-4 text-[#4f5eff]" />
 										</div>
