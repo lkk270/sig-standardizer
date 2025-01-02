@@ -89,15 +89,21 @@ jobs:
               
               # Debug: Show installed files
               echo 'Installed Tesseract files:'
-              which tesseract
-              ls -l $(which tesseract)
+              command -v tesseract || echo "tesseract not found in PATH"
+              find / -name tesseract -type f 2>/dev/null
               
               # Create directories
               mkdir -p /layer/lib
               mkdir -p /layer/lib/tessdata
               
-              # Copy Tesseract binary
-              cp -v $(which tesseract) /layer/lib/tesseract || exit 1
+              # Copy Tesseract binary (using find result)
+              TESSERACT_BIN=$(find / -name tesseract -type f 2>/dev/null | head -1)
+              if [ -z "$TESSERACT_BIN" ]; then
+                echo "Error: Could not find tesseract binary"
+                exit 1
+              fi
+              cp -v "$TESSERACT_BIN" /layer/lib/tesseract || exit 1
+
               # Copy tessdata files
               cp -rv /usr/share/tesseract/tessdata/* /layer/lib/tessdata/ || \
               cp -rv /usr/share/tessdata/* /layer/lib/tessdata/ || exit 1
