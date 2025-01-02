@@ -76,6 +76,10 @@ jobs:
           
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
+              # Enable EPEL repository
+              amazon-linux-extras install epel -y
+              yum update -y
+              # Install Tesseract and dependencies
               yum install -y tesseract tesseract-langpack-eng
               yum install -y libstdc++ libgomp libtiff libpng libjpeg
               
