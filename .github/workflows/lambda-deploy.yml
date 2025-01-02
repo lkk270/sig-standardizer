@@ -103,8 +103,12 @@ jobs:
           cd lambda/infrastructure
           terraform init -upgrade
 
+      - name: Terraform Plan
+        run: |
+          cd lambda/infrastructure
+          terraform plan -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -out=tfplan
+
       - name: Terraform Apply
         run: |
           cd lambda/infrastructure
-          terraform apply -auto-approve \
-            -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
+          terraform apply tfplan
