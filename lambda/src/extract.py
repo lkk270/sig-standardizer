@@ -5,9 +5,9 @@ from PIL import Image
 import io
 import os
 
-# Set LD_LIBRARY_PATH to find shared libraries
+# Set environment variables for Tesseract
 os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
-os.environ['TESSDATA_PREFIX'] = '/opt/lib/tesseract'
+os.environ['TESSDATA_PREFIX'] = '/opt/lib/tessdata'
 pytesseract.pytesseract.tesseract_cmd = '/opt/lib/tesseract'
 
 

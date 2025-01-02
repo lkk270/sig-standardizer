@@ -79,11 +79,14 @@ jobs:
               # Enable EPEL repository
               amazon-linux-extras install epel -y
               yum update -y
+
               # Install Tesseract and dependencies
               yum install -y tesseract tesseract-langpack-eng
               yum install -y libstdc++ libgomp libtiff libpng libjpeg
               
+              # Create the directory structure that Lambda expects
               mkdir -p /layer/lib
+              # Copy binaries and libraries
               cp /usr/bin/tesseract /layer/lib/
               cp -r /usr/share/tesseract /layer/lib/
               cp -r /usr/lib64/libtesseract* /layer/lib/
@@ -95,10 +98,13 @@ jobs:
               cp -r /usr/lib64/libgomp* /layer/lib/
               cp -r /usr/lib64/libstdc++* /layer/lib/
               
+              # Copy tessdata
+              cp -r /usr/share/tesseract/tessdata /layer/lib/
+
               chmod -R 755 /layer/lib
-              # Create tessdata directory and copy language data
-              mkdir -p /layer/lib/tessdata
-              cp -r /usr/share/tesseract/tessdata/* /layer/lib/tessdata/
+              # Debug: List contents
+              echo 'Layer contents:'
+              ls -R /layer/lib/
             "
           
           cd lambda-layer
