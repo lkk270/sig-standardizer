@@ -7,6 +7,7 @@ import os
 
 # Set LD_LIBRARY_PATH to find shared libraries
 os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
+os.environ['TESSDATA_PREFIX'] = '/opt/lib/tesseract'
 pytesseract.pytesseract.tesseract_cmd = '/opt/lib/tesseract'
 
 

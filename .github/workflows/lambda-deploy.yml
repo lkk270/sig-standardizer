@@ -91,7 +91,10 @@ jobs:
               cp -r /usr/lib64/libgomp* /layer/lib/
               cp -r /usr/lib64/libstdc++* /layer/lib/
               
-              chmod 755 /layer/lib/*
+              chmod -R 755 /layer/lib
+              # Create tessdata directory and copy language data
+              mkdir -p /layer/lib/tessdata
+              cp -r /usr/share/tesseract/tessdata/* /layer/lib/tessdata/
             "
           
           cd lambda-layer
