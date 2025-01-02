@@ -50,13 +50,17 @@ jobs:
             # Copy source file
             cp src/$func.py package/$func.py
 
-            # Create zip file
+            # Create zip file with correct name
             cd package
-            zip -r ../${func}_function.zip .
+            if [ "$func" = "extract" ]; then
+              zip -r ../function.zip .
+            else
+              zip -r ../${func}_function.zip .
+            fi
             cd ..
 
-            echo "Created ${func}_function.zip"
-            ls -lh ${func}_function.zip
+            echo "Created zip file for $func"
+            ls -lh *.zip
           done
 
       - name: Create Tesseract layer
