@@ -71,31 +71,37 @@ jobs:
       - name: Create Tesseract layer
         run: |
           cd lambda
-          mkdir -p lambda-layer/python
+          rm -rf lambda-layer
           mkdir -p lambda-layer/opt/lib
           mkdir -p lambda-layer/opt/lib/tessdata
           
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
               set -x  # Debug mode
-
-              # Enable EPEL and install Tesseract
-              amazon-linux-extras enable epel
+              
+              # Enable EPEL repository properly
+              amazon-linux-extras install epel -y
+              yum clean all && yum makecache
               yum update -y
-              yum install -y tesseract tesseract-langpack-eng libstdc++ libgomp libtiff libpng libjpeg leptonica
-
-              # Verify Tesseract installation
-              command -v tesseract || echo 'Tesseract not found'
-              find / -name tesseract -type f
-              ls -l /usr/bin/tesseract
-              ls -l /usr/share/tessdata
-
-              # Copy Tesseract binary and dependencies
-              mkdir -p /layer/opt/lib /layer/opt/lib/tessdata
-              cp /usr/bin/tesseract /layer/opt/lib/tesseract
-              cp -r /usr/share/tessdata/* /layer/opt/lib/tessdata/
-
-              # Copy necessary libraries
+              
+              # Install Tesseract and verify installation
+              yum install -y tesseract tesseract-langpack-eng
+              yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
+              
+              # Debug: Show installed files
+              echo 'Tesseract location:'
+              which tesseract
+              ls -l \$(which tesseract)
+              
+              # Copy Tesseract binary and verify
+              cp -v \$(which tesseract) /layer/opt/lib/tesseract
+              ls -l /layer/opt/lib/tesseract
+              
+              # Copy tessdata files and verify
+              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/
+              ls -l /layer/opt/lib/tessdata/
+              
+              # Copy required libraries
               for lib in \
                 /usr/lib64/libtesseract.so* \
                 /usr/lib64/liblept.so* \
@@ -107,16 +113,28 @@ jobs:
                 /usr/lib64/libstdc++.so*; do
                 cp -v \$lib /layer/opt/lib/
               done
-
+              
               chmod -R 755 /layer/opt/lib
-
-              # Debug final layer structure
-              find /layer -type f
+              
+              # Debug: Show final layer contents
+              echo 'Final layer contents:'
+              find /layer -type f -ls
+              
+              # Test Tesseract
+              echo 'Testing Tesseract in layer:'
+              LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/lib/tesseract --version
             "
+          
+          # Debug: Show layer contents before zipping
+          echo "Layer contents before zipping:"
+          find lambda-layer -type f -ls
           
           cd lambda-layer
           zip -r ../tesseract-layer.zip .
-          cd ..
+          
+          # Debug: Show zip contents
+          echo "Zip contents:"
+          unzip -l ../tesseract-layer.zip
 
       - name: Terraform Init
         run: |
