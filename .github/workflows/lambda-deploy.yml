@@ -79,36 +79,39 @@ jobs:
               # Enable EPEL repository
               amazon-linux-extras install epel -y
               yum update -y
-
+              yum install -y findutils
+              
               # Install Tesseract and dependencies
               yum install -y tesseract tesseract-langpack-eng
               yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
               # Debug: Show installed files
               echo 'Installed Tesseract files:'
-              find /usr -name 'tesseract'
-              find /usr -name 'tessdata'
+              find /usr -name 'tesseract' -type f
+              find /usr -name 'tessdata' -type d
               
-              # Create the directory structure
+              # Create the directory structure that Lambda expects
               mkdir -p /layer/lib
+              mkdir -p /layer/lib/tessdata
               
-              # Copy everything with full paths
-              cp -v /usr/bin/tesseract /layer/lib/
-              cp -rv /usr/share/tessdata /layer/lib/
-              cp -v /usr/lib64/libtesseract* /layer/lib/
-              cp -v /usr/lib64/liblept* /layer/lib/
-              cp -v /usr/lib64/libpng* /layer/lib/
-              cp -v /usr/lib64/libtiff* /layer/lib/
-              cp -v /usr/lib64/libjpeg* /layer/lib/
-              cp -v /usr/lib64/libwebp* /layer/lib/
-              cp -v /usr/lib64/libgomp* /layer/lib/
-              cp -v /usr/lib64/libstdc++* /layer/lib/
+              # Copy binaries and libraries with verbose output
+              cp -v $(which tesseract) /layer/lib/
+              cp -rv /usr/share/tesseract/tessdata/* /layer/lib/tessdata/
+              cp -v /usr/lib64/libtesseract.so* /layer/lib/
+              cp -v /usr/lib64/liblept.so* /layer/lib/
+              cp -v /usr/lib64/libpng.so* /layer/lib/
+              cp -v /usr/lib64/libtiff.so* /layer/lib/
+              cp -v /usr/lib64/libjpeg.so* /layer/lib/
+              cp -v /usr/lib64/libwebp.so* /layer/lib/
+              cp -v /usr/lib64/libgomp.so* /layer/lib/
+              cp -v /usr/lib64/libstdc++.so* /layer/lib/
               
+              # Set permissions
               chmod -R 755 /layer/lib
               
               # Debug: Show final layer contents
               echo 'Final layer contents:'
-              ls -R /layer/lib/
+              find /layer -type f
             "
           
           cd lambda-layer
