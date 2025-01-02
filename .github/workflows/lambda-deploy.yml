@@ -103,12 +103,31 @@ jobs:
           cd lambda/infrastructure
           terraform init -upgrade
 
-      - name: Terraform Plan
+      - name: Select Terraform Workspace
         run: |
           cd lambda/infrastructure
-          terraform plan -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}" -out=tfplan
+          terraform workspace select prod || terraform workspace new prod
+
+      - name: Terraform Plan
+        id: terraform_plan
+        run: |
+          cd lambda/infrastructure
+          terraform plan -out=tfplan \
+            -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
+        continue-on-error: true
+
+      - name: Check Terraform Plan Exit Code
+        run: |
+          if [ -s lambda/infrastructure/tfplan ]; then
+            echo "Terraform plan succeeded with changes."
+            echo "apply_plan=true" >> $GITHUB_ENV
+          else
+            echo "No changes detected or plan failed."
+            echo "apply_plan=false" >> $GITHUB_ENV
+          fi
 
       - name: Terraform Apply
+        if: env.apply_plan == 'true'
         run: |
           cd lambda/infrastructure
-          terraform apply tfplan
+          terraform apply -auto-approve tfplan
