@@ -85,13 +85,14 @@ jobs:
               yum makecache
               yum update -y
               
-              # Install development tools
+              # Install development tools and core utilities
+              yum install -y which findutils
               yum groupinstall -y 'Development Tools'
               yum install -y tesseract tesseract-devel tesseract-langpack-eng leptonica-devel
               yum install -y libstdc++ libgomp libtiff libpng libjpeg
               
               # Find and copy tesseract executable
-              TESSERACT_PATH=\$(readlink -f \$(which tesseract))
+              TESSERACT_PATH=/usr/bin/tesseract
               echo \"Found tesseract at: \$TESSERACT_PATH\"
               cp -v \$TESSERACT_PATH /layer/opt/lib/tesseract
               chmod 755 /layer/opt/lib/tesseract
