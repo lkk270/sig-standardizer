@@ -4,20 +4,33 @@ import pytesseract
 from PIL import Image
 import io
 import os
-
-# Set environment variables for Tesseract
-os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
-os.environ['TESSDATA_PREFIX'] = '/opt/lib/tessdata'
-pytesseract.pytesseract.tesseract_cmd = '/opt/lib/tesseract'
+import subprocess
 
 
 def lambda_handler(event, context):
     try:
+        # Debug: Print environment variables and file structure
+        print("Environment variables:")
+        print(f"LD_LIBRARY_PATH: {os.environ.get('LD_LIBRARY_PATH')}")
+        print(f"TESSDATA_PREFIX: {os.environ.get('TESSDATA_PREFIX')}")
+
+        print("\nDirectory contents:")
+        print("/opt/lib contents:")
+        print(subprocess.check_output(['ls', '-l', '/opt/lib']).decode())
+
+        print("\nTesseract file permissions:")
+        print(subprocess.check_output(
+            ['ls', '-l', '/opt/lib/tesseract']).decode())
+
+        # Set environment variables for Tesseract
+        os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
+        os.environ['TESSDATA_PREFIX'] = '/opt/lib/tessdata'
+        pytesseract.pytesseract.tesseract_cmd = '/opt/lib/tesseract'
+
         # Parse the request body
         body = json.loads(event['body'])
 
         # Get the base64 encoded image
-        # Remove data:image/jpeg;base64,
         image_data = body['image'].split(',')[1]
         image_bytes = base64.b64decode(image_data)
 
@@ -40,7 +53,10 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        print(f"Error: {str(e)}")  # For CloudWatch logs
+        print(f"Error: {str(e)}")
+        # If it's a subprocess error, print the output
+        if isinstance(e, subprocess.CalledProcessError):
+            print(f"Command output: {e.output.decode()}")
         return {
             'statusCode': 500,
             'headers': {
