@@ -13,14 +13,20 @@ def lambda_handler(event, context):
         print("Environment variables:")
         print(f"LD_LIBRARY_PATH: {os.environ.get('LD_LIBRARY_PATH')}")
         print(f"TESSDATA_PREFIX: {os.environ.get('TESSDATA_PREFIX')}")
+        print(f"PATH: {os.environ.get('PATH')}")
 
         print("\nDirectory contents:")
-        print("/opt/lib contents:")
-        print(subprocess.check_output(['ls', '-l', '/opt/lib']).decode())
+        print("/opt contents:")
+        print(subprocess.check_output(['ls', '-lR', '/opt']).decode())
 
-        print("\nTesseract file permissions:")
-        print(subprocess.check_output(
-            ['ls', '-l', '/opt/lib/tesseract']).decode())
+        print("\nTesseract binary check:")
+        tesseract_path = '/opt/lib/tesseract'
+        if os.path.exists(tesseract_path):
+            print(f"Tesseract exists at {tesseract_path}")
+            print(
+                f"File permissions: {oct(os.stat(tesseract_path).st_mode)[-3:]}")
+        else:
+            print(f"Tesseract not found at {tesseract_path}")
 
         # Set environment variables for Tesseract
         os.environ['LD_LIBRARY_PATH'] = '/opt/lib'

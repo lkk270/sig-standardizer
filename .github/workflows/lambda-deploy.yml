@@ -85,23 +85,26 @@ jobs:
               yum makecache
               yum update -y
               
-              # Install development tools and core utilities
-              yum install -y which findutils
-              yum groupinstall -y 'Development Tools'
-              yum install -y tesseract tesseract-devel tesseract-langpack-eng leptonica-devel
-              yum install -y libstdc++ libgomp libtiff libpng libjpeg
+              # Install tesseract and dependencies
+              yum install -y tesseract tesseract-langpack-eng
+              yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
-              # Find and copy tesseract executable
-              TESSERACT_PATH=/usr/bin/tesseract
-              echo \"Found tesseract at: \$TESSERACT_PATH\"
-              cp -v \$TESSERACT_PATH /layer/opt/lib/tesseract
+              # Debug: Show installed files
+              echo 'Tesseract package files:'
+              rpm -ql tesseract
+              
+              # Copy tesseract binary and verify
+              cp -v /usr/bin/tesseract /layer/opt/lib/
               chmod 755 /layer/opt/lib/tesseract
               
-              # Find and copy tessdata
-              find /usr -name tessdata -type d -exec cp -rv {}/* /layer/opt/lib/tessdata/ \\;
+              # Copy tessdata files
+              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/
+              chmod -R 755 /layer/opt/lib/tessdata
               
-              # Copy all required libraries
-              ldd \$TESSERACT_PATH | grep '=> /' | awk '{print \$3}' | xargs -I '{}' cp -v '{}' /layer/opt/lib/
+              # Copy required libraries
+              for lib in \$(ldd /usr/bin/tesseract | grep '=>' | awk '{print \$3}'); do
+                cp -v \$lib /layer/opt/lib/
+              done
               
               chmod -R 755 /layer/opt/lib
               
