@@ -90,4 +90,3 @@ resource "aws_lambda_function_url" "standardize_text_url" {
     max_age          = 86400
   }
 } 
-} 
