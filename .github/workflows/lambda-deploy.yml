@@ -77,8 +77,8 @@ jobs:
           
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
-              set -e
-
+              set -ex
+              
               # Install EPEL and update
               amazon-linux-extras install epel -y
               yum clean all
@@ -89,13 +89,15 @@ jobs:
               yum install -y tesseract tesseract-langpack-eng which
               yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
-              # Copy tesseract binary and verify
-              TESSERACT_BIN=\$(which tesseract)
-              echo \"Found tesseract at: \$TESSERACT_BIN\"
-              cp -v \$TESSERACT_BIN /layer/opt/lib/tesseract
+              # Debug: Show where tesseract is installed
+              echo 'Tesseract location:'
+              which tesseract
+              
+              # Copy tesseract binary directly from /usr/bin
+              cp -v /usr/bin/tesseract /layer/opt/lib/
               chmod 755 /layer/opt/lib/tesseract
               
-              # Copy tessdata files
+              # Copy tessdata files (try both possible locations)
               cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/ || \
               cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/
               
@@ -118,7 +120,7 @@ jobs:
               
               echo 'Layer contents:'
               find /layer -type f -ls
-
+              
               echo 'Testing Tesseract:'
               LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/lib/tesseract --version
             "
