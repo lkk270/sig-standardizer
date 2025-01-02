@@ -85,36 +85,22 @@ jobs:
               yum makecache
               yum update -y
               
-              # Install tesseract and dependencies
-              yum install -y tesseract tesseract-langpack-eng which
-              yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
+              # Install development tools
+              yum groupinstall -y 'Development Tools'
+              yum install -y tesseract tesseract-devel tesseract-langpack-eng leptonica-devel
+              yum install -y libstdc++ libgomp libtiff libpng libjpeg
               
-              # Debug: Show where tesseract is installed
-              echo 'Tesseract location:'
-              which tesseract
-              
-              # Copy tesseract binary directly from /usr/bin
-              cp -v /usr/bin/tesseract /layer/opt/lib/
+              # Find and copy tesseract executable
+              TESSERACT_PATH=\$(readlink -f \$(which tesseract))
+              echo \"Found tesseract at: \$TESSERACT_PATH\"
+              cp -v \$TESSERACT_PATH /layer/opt/lib/tesseract
               chmod 755 /layer/opt/lib/tesseract
               
-              # Copy tessdata files (try both possible locations)
-              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/ || \
-              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/
+              # Find and copy tessdata
+              find /usr -name tessdata -type d -exec cp -rv {}/* /layer/opt/lib/tessdata/ \\;
               
-              # Copy required libraries
-              for lib in \
-                /usr/lib64/libtesseract.so* \
-                /usr/lib64/liblept.so* \
-                /usr/lib64/libpng*.so* \
-                /usr/lib64/libtiff*.so* \
-                /usr/lib64/libjpeg*.so* \
-                /usr/lib64/libwebp*.so* \
-                /usr/lib64/libgomp*.so* \
-                /usr/lib64/libstdc++*.so* \
-                /usr/lib64/libgif*.so* \
-                /usr/lib64/libz*.so*; do
-                cp -v \$lib /layer/opt/lib/ || true
-              done
+              # Copy all required libraries
+              ldd \$TESSERACT_PATH | grep '=> /' | awk '{print \$3}' | xargs -I '{}' cp -v '{}' /layer/opt/lib/
               
               chmod -R 755 /layer/opt/lib
               
