@@ -72,7 +72,8 @@ jobs:
         run: |
           cd lambda
           mkdir -p lambda-layer/python
-          mkdir -p lambda-layer/lib
+          mkdir -p lambda-layer/opt/lib
+          mkdir -p lambda-layer/opt/lib/tessdata
           
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
@@ -89,24 +90,20 @@ jobs:
               
               # Debug: Show installed files
               echo 'Installed Tesseract files:'
-              command -v tesseract || echo "tesseract not found in PATH"
+              command -v tesseract || echo \"tesseract not found in PATH\"
               find / -name tesseract -type f 2>/dev/null
               
-              # Create directories
-              mkdir -p /layer/lib
-              mkdir -p /layer/lib/tessdata
-              
               # Copy Tesseract binary (using find result)
-              TESSERACT_BIN=$(find / -name tesseract -type f 2>/dev/null | head -1)
-              if [ -z "$TESSERACT_BIN" ]; then
-                echo "Error: Could not find tesseract binary"
+              TESSERACT_BIN=\$(find / -name tesseract -type f 2>/dev/null | head -1)
+              if [ -z \"\$TESSERACT_BIN\" ]; then
+                echo \"Error: Could not find tesseract binary\"
                 exit 1
               fi
-              cp -v "$TESSERACT_BIN" /layer/lib/tesseract || exit 1
+              cp -v \"\$TESSERACT_BIN\" /layer/opt/lib/tesseract || exit 1
 
               # Copy tessdata files
-              cp -rv /usr/share/tesseract/tessdata/* /layer/lib/tessdata/ || \
-              cp -rv /usr/share/tessdata/* /layer/lib/tessdata/ || exit 1
+              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/ || \
+              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/ || exit 1
 
               # Copy required libraries
               for lib in \
@@ -118,10 +115,10 @@ jobs:
                 /usr/lib64/libwebp.so* \
                 /usr/lib64/libgomp.so* \
                 /usr/lib64/libstdc++.so*; do
-                cp -v \$lib /layer/lib/ || echo \"Warning: Could not copy \$lib\"
+                cp -v \$lib /layer/opt/lib/ || echo \"Warning: Could not copy \$lib\"
               done
               
-              chmod -R 755 /layer/lib
+              chmod -R 755 /layer/opt/lib
               
               # Debug: Show final layer contents
               echo 'Final layer contents:'
@@ -129,7 +126,7 @@ jobs:
 
               # Test Tesseract
               echo 'Testing Tesseract:'
-              LD_LIBRARY_PATH=/layer/lib TESSDATA_PREFIX=/layer/lib/tessdata /layer/lib/tesseract --version
+              LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/lib/tesseract --version
             "
           
           cd lambda-layer
