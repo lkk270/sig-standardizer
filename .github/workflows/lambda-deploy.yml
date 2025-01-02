@@ -29,11 +29,6 @@ jobs:
 
       - name: Create deployment packages
         run: |
-          # Debug: Show current directory
-          echo "Current directory contents:"
-          ls -la
-
-          # Create packages for both functions
           for func in extract standardize; do
             echo "Creating package for $func function..."
             
@@ -41,22 +36,23 @@ jobs:
             rm -rf package
             mkdir -p package
 
-            # Install dependencies
-            pip install --no-cache-dir --platform manylinux2014_x86_64 \
-              --target ./package --implementation cp --python-version 3.9 \
-              --only-binary=:all: --upgrade -r requirements.txt
-
-            # Clean up unnecessary files
-            rm -rf package/*.dist-info package/*.pth
+            # Install dependencies with platform-specific binaries
+            pip install --target ./package \
+                --platform manylinux2014_x86_64 \
+                --implementation cp \
+                --python-version 3.9 \
+                --only-binary=:all: \
+                pillow pytesseract
 
             # Copy source file
-            cp src/$func.py package/
+            cp src/$func.py package/$func.py
 
             # Create zip file
-            cd package && zip -r ../${func}_function.zip . -x "*.pyc" "*.pyo" "test*" "tests*" "*__pycache__*"
+            cd package
+            zip -r ../${func}_function.zip .
             cd ..
 
-            # Debug: Show zip size
+            echo "Created ${func}_function.zip"
             ls -lh ${func}_function.zip
           done
 
@@ -88,3 +84,32 @@ jobs:
         run: |
           cd infrastructure
           terraform apply -auto-approve tfplan
+
+      - name: Create Tesseract layer
+        run: |
+          mkdir -p lambda-layer/python
+          mkdir -p lambda-layer/lib
+          
+          docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
+            bash -c "
+              yum install -y tesseract tesseract-langpack-eng
+              yum install -y libstdc++ libgomp libtiff libpng libjpeg
+              
+              mkdir -p /layer/lib
+              cp /usr/bin/tesseract /layer/lib/
+              cp -r /usr/share/tesseract /layer/lib/
+              cp -r /usr/lib64/libtesseract* /layer/lib/
+              cp -r /usr/lib64/liblept* /layer/lib/
+              cp -r /usr/lib64/libpng* /layer/lib/
+              cp -r /usr/lib64/libtiff* /layer/lib/
+              cp -r /usr/lib64/libjpeg* /layer/lib/
+              cp -r /usr/lib64/libwebp* /layer/lib/
+              cp -r /usr/lib64/libgomp* /layer/lib/
+              cp -r /usr/lib64/libstdc++* /layer/lib/
+              
+              chmod 755 /layer/lib/*
+            "
+          
+          cd lambda-layer
+          zip -r ../tesseract-layer.zip .
+          cd ..

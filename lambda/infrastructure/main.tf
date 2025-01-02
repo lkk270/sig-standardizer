@@ -42,6 +42,17 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+# Create Lambda layer for Tesseract
+resource "aws_lambda_layer_version" "tesseract" {
+  filename         = "../tesseract-layer.zip"
+  layer_name       = "tesseract"
+  description      = "Tesseract OCR binaries and libraries"
+  
+  compatible_runtimes = ["python3.9"]
+
+  source_code_hash = filebase64sha256("../tesseract-layer.zip")
+}
+
 # First Lambda (existing extract-text)
 resource "aws_lambda_function" "extract_text" {
   filename         = "../function.zip"
@@ -57,6 +68,8 @@ resource "aws_lambda_function" "extract_text" {
   environment {
     variables = {
       PYTHONPATH = "/opt/python"
+      LD_LIBRARY_PATH = "/opt/lib"
+      TESSDATA_PREFIX = "/opt/lib/tesseract"
       STANDARDIZE_FUNCTION_URL = aws_lambda_function_url.standardize_text_url.function_url
     }
   }
@@ -67,6 +80,8 @@ resource "aws_lambda_function" "extract_text" {
     ManagedBy   = "terraform"
     Project     = var.project_name
   }
+
+  layers = [aws_lambda_layer_version.tesseract.arn]
 }
 
 # Second Lambda for standardization

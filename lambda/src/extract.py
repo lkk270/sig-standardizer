@@ -3,6 +3,11 @@ import base64
 import pytesseract
 from PIL import Image
 import io
+import os
+
+# Set LD_LIBRARY_PATH to find shared libraries
+os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
+pytesseract.pytesseract.tesseract_cmd = '/opt/lib/tesseract'
 
 
 def lambda_handler(event, context):

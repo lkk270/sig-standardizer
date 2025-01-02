@@ -31,4 +31,8 @@ terraform.rc
 
 # Build outputs
 *.zip
-layer/ 
+layer/
+package/
+lambda-layer/
+*_function.zip
+tesseract-layer.zip 
