@@ -77,32 +77,25 @@ jobs:
           
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
-              set -x  # Enable debug mode
+              set -x  # Debug mode
 
-              # Enable EPEL repository
-              amazon-linux-extras install epel -y
+              # Enable EPEL and install Tesseract
+              amazon-linux-extras enable epel
               yum update -y
-              yum install -y findutils
-              
-              # Install Tesseract and dependencies
-              yum install -y tesseract tesseract-langpack-eng
-              yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
-              
-              # Debug: Show installed files
-              echo 'Installed Tesseract files:'
-              command -v tesseract || echo \"tesseract not found in PATH\"
-              find / -name tesseract -type f 2>/dev/null
-              ls -l /usr/bin/tesseract || echo \"No tesseract in /usr/bin\"
-              ls -l /usr/share/tessdata || echo \"No tessdata in /usr/share\"
+              yum install -y tesseract tesseract-langpack-eng libstdc++ libgomp libtiff libpng libjpeg leptonica
 
-              # Copy Tesseract binary directly from known location
-              cp -v /usr/bin/tesseract /layer/opt/lib/tesseract || exit 1
+              # Verify Tesseract installation
+              command -v tesseract || echo 'Tesseract not found'
+              find / -name tesseract -type f
+              ls -l /usr/bin/tesseract
+              ls -l /usr/share/tessdata
 
-              # Copy tessdata files (try both possible locations)
-              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/ || \
-              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/ || exit 1
+              # Copy Tesseract binary and dependencies
+              mkdir -p /layer/opt/lib /layer/opt/lib/tessdata
+              cp /usr/bin/tesseract /layer/opt/lib/tesseract
+              cp -r /usr/share/tessdata/* /layer/opt/lib/tessdata/
 
-              # Copy required libraries
+              # Copy necessary libraries
               for lib in \
                 /usr/lib64/libtesseract.so* \
                 /usr/lib64/liblept.so* \
@@ -112,18 +105,13 @@ jobs:
                 /usr/lib64/libwebp.so* \
                 /usr/lib64/libgomp.so* \
                 /usr/lib64/libstdc++.so*; do
-                cp -v \$lib /layer/opt/lib/ || echo \"Warning: Could not copy \$lib\"
+                cp -v \$lib /layer/opt/lib/
               done
-              
-              chmod -R 755 /layer/opt/lib
-              
-              # Debug: Show final layer contents
-              echo 'Final layer contents:'
-              find /layer -type f -ls
 
-              # Test Tesseract
-              echo 'Testing Tesseract:'
-              LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/lib/tesseract --version
+              chmod -R 755 /layer/opt/lib
+
+              # Debug final layer structure
+              find /layer -type f
             "
           
           cd lambda-layer
