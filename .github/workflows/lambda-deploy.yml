@@ -76,6 +76,8 @@ jobs:
           
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
+              set -x  # Enable debug mode
+
               # Enable EPEL repository
               amazon-linux-extras install epel -y
               yum update -y
@@ -87,18 +89,34 @@ jobs:
               
               # Debug: Show installed files
               echo 'Installed Tesseract files:'
-              find /usr -name 'tesseract' -type f
-              find /usr -name 'tessdata' -type d
+              which tesseract || echo 'tesseract not in PATH'
+              find /usr -name 'tesseract' -type f || echo 'No tesseract binary found'
+              find /usr -name 'tessdata' -type d || echo 'No tessdata directory found'
               
               # Create the directory structure that Lambda expects
               mkdir -p /layer/lib
               mkdir -p /layer/lib/tessdata
               
               # Copy binaries and libraries with verbose output
-              cp -v $(which tesseract) /layer/lib/
-              cp -rv /usr/share/tesseract/tessdata/* /layer/lib/tessdata/
-              cp -v /usr/lib64/libtesseract.so* /layer/lib/
-              cp -v /usr/lib64/liblept.so* /layer/lib/
+              TESSERACT_BIN=\$(find /usr -name 'tesseract' -type f)
+              if [ -n \"\$TESSERACT_BIN\" ]; then
+                cp -v \"\$TESSERACT_BIN\" /layer/lib/
+              else
+                echo 'ERROR: Could not find tesseract binary'
+                exit 1
+              fi
+
+              TESSDATA_DIR=\$(find /usr -name 'tessdata' -type d)
+              if [ -n \"\$TESSDATA_DIR\" ]; then
+                cp -rv \"\$TESSDATA_DIR\"/* /layer/lib/tessdata/
+              else
+                echo 'ERROR: Could not find tessdata directory'
+                exit 1
+              fi
+
+              # Copy all required libraries
+              cp -v /usr/lib64/libtesseract.so* /layer/lib/ || echo 'No libtesseract found'
+              cp -v /usr/lib64/liblept.so* /layer/lib/ || echo 'No liblept found'
               cp -v /usr/lib64/libpng.so* /layer/lib/
               cp -v /usr/lib64/libtiff.so* /layer/lib/
               cp -v /usr/lib64/libjpeg.so* /layer/lib/
@@ -106,12 +124,14 @@ jobs:
               cp -v /usr/lib64/libgomp.so* /layer/lib/
               cp -v /usr/lib64/libstdc++.so* /layer/lib/
               
-              # Set permissions
               chmod -R 755 /layer/lib
               
               # Debug: Show final layer contents
               echo 'Final layer contents:'
               find /layer -type f
+
+              # Verify the tesseract binary works
+              /layer/lib/tesseract --version || echo 'ERROR: Tesseract binary not working'
             "
           
           cd lambda-layer
