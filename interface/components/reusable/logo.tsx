@@ -51,7 +51,7 @@ export const Logo = ({
 							textColor && `text-primary/70`
 						)}
 					>
-						NoSigotest
+						NoSigo22
 					</p>
 				)}
 			</div>
