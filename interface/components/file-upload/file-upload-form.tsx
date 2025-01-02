@@ -20,6 +20,7 @@ import { extractText } from "@/app/(landing)/actions/extract-text";
 export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
 	const { isLoading, setIsLoading } = useIsLoading();
+	// @typescript-eslint/no-unused-vars
 	const [isPending, startTransition] = useTransition();
 
 	const updateFileStatus = (

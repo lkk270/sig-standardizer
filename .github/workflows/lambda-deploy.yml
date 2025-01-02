@@ -29,6 +29,7 @@ jobs:
 
       - name: Create deployment packages
         run: |
+          cd lambda
           for func in extract standardize; do
             echo "Creating package for $func function..."
             
