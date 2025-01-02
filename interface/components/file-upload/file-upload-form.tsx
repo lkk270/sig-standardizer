@@ -58,7 +58,10 @@ export const FileUploadForm = () => {
 			const data = await response.json();
 			console.log("Extracted text:", data.text);
 			updateFileStatus("uploaded");
-		} catch (_error) {
+		} catch (
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			error
+		) {
 			updateFileStatus("error");
 		}
 
