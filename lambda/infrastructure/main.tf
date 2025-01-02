@@ -101,4 +101,24 @@ resource "aws_lambda_function_url" "standardize_text_url" {
     expose_headers    = ["*"]
     max_age          = 86400
   }
+}
+
+import {
+  to = aws_lambda_function.extract_text
+  id = "extract-text"
+}
+
+import {
+  to = aws_lambda_function.standardize_text
+  id = "standardize-text"
+}
+
+import {
+  to = aws_lambda_function_url.extract_text_url
+  id = "extract-text"
+}
+
+import {
+  to = aws_lambda_function_url.standardize_text_url
+  id = "standardize-text"
 } 
