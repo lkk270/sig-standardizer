@@ -36,6 +36,9 @@ resource "aws_lambda_function" "extract_text" {
   
   # Force update when code changes
   source_code_hash = filebase64sha256("../function.zip")
+  replace_triggered_by = [
+    filesha256("../function.zip")
+  ]
 
   layers = [aws_lambda_layer_version.tesseract.arn]
 
@@ -59,6 +62,9 @@ resource "aws_lambda_function" "standardize_text" {
   
   # Force update when code changes
   source_code_hash = filebase64sha256("../standardize_function.zip")
+  replace_triggered_by = [
+    filesha256("../standardize_function.zip")
+  ]
 
   environment {
     variables = {
