@@ -58,7 +58,7 @@ export const FileUploadForm = () => {
 			const data = await response.json();
 			console.log("Extracted text:", data.text);
 			updateFileStatus("uploaded");
-		} catch (error) {
+		} catch (_error) {
 			updateFileStatus("error");
 		}
 
