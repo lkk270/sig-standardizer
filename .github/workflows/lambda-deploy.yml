@@ -59,37 +59,9 @@ jobs:
             ls -lh ${func}_function.zip
           done
 
-      - name: Terraform Init
-        run: |
-          cd lambda/infrastructure
-          terraform init
-
-      - name: Terraform Plan
-        id: terraform_plan
-        run: |
-          cd lambda/infrastructure
-          terraform plan -out=tfplan \
-            -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
-        continue-on-error: true
-
-      - name: Check Terraform Plan Exit Code
-        run: |
-          if [ -s lambda/infrastructure/tfplan ]; then
-            echo "Terraform plan succeeded with changes."
-            echo "apply_plan=true" >> $GITHUB_ENV
-          else
-            echo "No changes detected or plan failed."
-            echo "apply_plan=false" >> $GITHUB_ENV
-          fi
-
-      - name: Terraform Apply
-        if: env.apply_plan == 'true'
-        run: |
-          cd lambda/infrastructure
-          terraform apply -auto-approve tfplan
-
       - name: Create Tesseract layer
         run: |
+          cd lambda
           mkdir -p lambda-layer/python
           mkdir -p lambda-layer/lib
           
@@ -116,3 +88,14 @@ jobs:
           cd lambda-layer
           zip -r ../tesseract-layer.zip .
           cd ..
+
+      - name: Terraform Init
+        run: |
+          cd lambda/infrastructure
+          terraform init -upgrade
+
+      - name: Terraform Apply
+        run: |
+          cd lambda/infrastructure
+          terraform apply -auto-approve \
+            -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
