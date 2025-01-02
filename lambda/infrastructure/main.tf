@@ -51,6 +51,13 @@ resource "aws_lambda_function" "extract_text" {
     ManagedBy   = "terraform"
     Project     = var.project_name
   }
+
+  environment {
+    variables = {
+      TESSDATA_PREFIX = "/opt/lib/tessdata"
+      LD_LIBRARY_PATH = "/opt/lib"
+    }
+  }
 }
 
 # Create Lambda function for text standardization
