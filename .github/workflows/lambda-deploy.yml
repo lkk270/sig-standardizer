@@ -40,12 +40,17 @@ jobs:
             mkdir -p package
 
             # Install dependencies with platform-specific binaries
-            pip install --target ./package \
-                --platform manylinux2014_x86_64 \
-                --implementation cp \
-                --python-version 3.9 \
-                --only-binary=:all: \
-                pillow pytesseract
+            if [ "$func" = "extract" ]; then
+              pip install --target ./package \
+                  --platform manylinux2014_x86_64 \
+                  --implementation cp \
+                  --python-version 3.9 \
+                  --only-binary=:all: \
+                  pillow pytesseract
+            else
+              pip install --target ./package \
+                  openai
+            fi
 
             # Copy source file
             cp src/$func.py package/$func.py

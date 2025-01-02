@@ -33,6 +33,7 @@ resource "aws_lambda_function" "extract_text" {
   runtime         = "python3.9"
   timeout         = 30
   memory_size     = 512
+  force_destroy   = true
 
   layers = [aws_lambda_layer_version.tesseract.arn]
 
@@ -53,6 +54,7 @@ resource "aws_lambda_function" "standardize_text" {
   runtime      = "python3.9"
   timeout      = 60
   memory_size  = 1024
+  force_destroy = true
 
   environment {
     variables = {
