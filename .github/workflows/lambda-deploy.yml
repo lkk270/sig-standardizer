@@ -59,20 +59,20 @@ jobs:
 
       - name: Terraform Init
         run: |
-          cd infrastructure
+          cd lambda/infrastructure
           terraform init
 
       - name: Terraform Plan
         id: terraform_plan
         run: |
-          cd infrastructure
+          cd lambda/infrastructure
           terraform plan -out=tfplan \
             -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
         continue-on-error: true
 
       - name: Check Terraform Plan Exit Code
         run: |
-          if [ -s infrastructure/tfplan ]; then
+          if [ -s lambda/infrastructure/tfplan ]; then
             echo "Terraform plan succeeded with changes."
             echo "apply_plan=true" >> $GITHUB_ENV
           else
@@ -83,7 +83,7 @@ jobs:
       - name: Terraform Apply
         if: env.apply_plan == 'true'
         run: |
-          cd infrastructure
+          cd lambda/infrastructure
           terraform apply -auto-approve tfplan
 
       - name: Create Tesseract layer
