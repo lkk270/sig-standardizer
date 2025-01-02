@@ -89,40 +89,31 @@ jobs:
               
               # Debug: Show installed files
               echo 'Installed Tesseract files:'
-              which tesseract || echo 'tesseract not in PATH'
-              find /usr -name 'tesseract' -type f || echo 'No tesseract binary found'
-              find /usr -name 'tessdata' -type d || echo 'No tessdata directory found'
+              which tesseract
+              ls -l $(which tesseract)
               
-              # Create the directory structure that Lambda expects
+              # Create directories
               mkdir -p /layer/lib
               mkdir -p /layer/lib/tessdata
               
-              # Copy binaries and libraries with verbose output
-              TESSERACT_BIN=\$(find /usr -name 'tesseract' -type f)
-              if [ -n \"\$TESSERACT_BIN\" ]; then
-                cp -v \"\$TESSERACT_BIN\" /layer/lib/
-              else
-                echo 'ERROR: Could not find tesseract binary'
-                exit 1
-              fi
+              # Copy Tesseract binary
+              cp -v $(which tesseract) /layer/lib/tesseract || exit 1
+              # Copy tessdata files
+              cp -rv /usr/share/tesseract/tessdata/* /layer/lib/tessdata/ || \
+              cp -rv /usr/share/tessdata/* /layer/lib/tessdata/ || exit 1
 
-              TESSDATA_DIR=\$(find /usr -name 'tessdata' -type d)
-              if [ -n \"\$TESSDATA_DIR\" ]; then
-                cp -rv \"\$TESSDATA_DIR\"/* /layer/lib/tessdata/
-              else
-                echo 'ERROR: Could not find tessdata directory'
-                exit 1
-              fi
-
-              # Copy all required libraries
-              cp -v /usr/lib64/libtesseract.so* /layer/lib/ || echo 'No libtesseract found'
-              cp -v /usr/lib64/liblept.so* /layer/lib/ || echo 'No liblept found'
-              cp -v /usr/lib64/libpng.so* /layer/lib/
-              cp -v /usr/lib64/libtiff.so* /layer/lib/
-              cp -v /usr/lib64/libjpeg.so* /layer/lib/
-              cp -v /usr/lib64/libwebp.so* /layer/lib/
-              cp -v /usr/lib64/libgomp.so* /layer/lib/
-              cp -v /usr/lib64/libstdc++.so* /layer/lib/
+              # Copy required libraries
+              for lib in \
+                /usr/lib64/libtesseract.so* \
+                /usr/lib64/liblept.so* \
+                /usr/lib64/libpng.so* \
+                /usr/lib64/libtiff.so* \
+                /usr/lib64/libjpeg.so* \
+                /usr/lib64/libwebp.so* \
+                /usr/lib64/libgomp.so* \
+                /usr/lib64/libstdc++.so*; do
+                cp -v \$lib /layer/lib/ || echo \"Warning: Could not copy \$lib\"
+              done
               
               chmod -R 755 /layer/lib
               
@@ -130,8 +121,9 @@ jobs:
               echo 'Final layer contents:'
               find /layer -type f
 
-              # Verify the tesseract binary works
-              /layer/lib/tesseract --version || echo 'ERROR: Tesseract binary not working'
+              # Test Tesseract
+              echo 'Testing Tesseract:'
+              LD_LIBRARY_PATH=/layer/lib TESSDATA_PREFIX=/layer/lib/tessdata /layer/lib/tesseract --version
             "
           
           cd lambda-layer
