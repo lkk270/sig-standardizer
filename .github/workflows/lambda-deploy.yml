@@ -82,28 +82,32 @@ jobs:
 
               # Install Tesseract and dependencies
               yum install -y tesseract tesseract-langpack-eng
-              yum install -y libstdc++ libgomp libtiff libpng libjpeg
+              yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
-              # Create the directory structure that Lambda expects
+              # Debug: Show installed files
+              echo 'Installed Tesseract files:'
+              find /usr -name 'tesseract'
+              find /usr -name 'tessdata'
+              
+              # Create the directory structure
               mkdir -p /layer/lib
-              # Copy binaries and libraries
-              cp /usr/bin/tesseract /layer/lib/
-              cp -r /usr/share/tesseract /layer/lib/
-              cp -r /usr/lib64/libtesseract* /layer/lib/
-              cp -r /usr/lib64/liblept* /layer/lib/
-              cp -r /usr/lib64/libpng* /layer/lib/
-              cp -r /usr/lib64/libtiff* /layer/lib/
-              cp -r /usr/lib64/libjpeg* /layer/lib/
-              cp -r /usr/lib64/libwebp* /layer/lib/
-              cp -r /usr/lib64/libgomp* /layer/lib/
-              cp -r /usr/lib64/libstdc++* /layer/lib/
               
-              # Copy tessdata
-              cp -r /usr/share/tesseract/tessdata /layer/lib/
-
+              # Copy everything with full paths
+              cp -v /usr/bin/tesseract /layer/lib/
+              cp -rv /usr/share/tessdata /layer/lib/
+              cp -v /usr/lib64/libtesseract* /layer/lib/
+              cp -v /usr/lib64/liblept* /layer/lib/
+              cp -v /usr/lib64/libpng* /layer/lib/
+              cp -v /usr/lib64/libtiff* /layer/lib/
+              cp -v /usr/lib64/libjpeg* /layer/lib/
+              cp -v /usr/lib64/libwebp* /layer/lib/
+              cp -v /usr/lib64/libgomp* /layer/lib/
+              cp -v /usr/lib64/libstdc++* /layer/lib/
+              
               chmod -R 755 /layer/lib
-              # Debug: List contents
-              echo 'Layer contents:'
+              
+              # Debug: Show final layer contents
+              echo 'Final layer contents:'
               ls -R /layer/lib/
             "
           
