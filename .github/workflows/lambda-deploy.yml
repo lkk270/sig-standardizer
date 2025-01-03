@@ -87,18 +87,12 @@ jobs:
         run: |
           cd lambda/infrastructure
           terraform init -upgrade
-
-      - name: Select Terraform Workspace
-        run: |
-          cd lambda/infrastructure
           terraform workspace select prod || terraform workspace new prod
 
       - name: Terraform Plan
         id: terraform_plan
         run: |
           cd lambda/infrastructure
-          terraform init -upgrade
-          terraform workspace select prod || terraform workspace new prod
           terraform plan -out=tfplan \
             -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
 
