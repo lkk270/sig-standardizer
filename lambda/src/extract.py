@@ -9,6 +9,24 @@ import subprocess
 
 def lambda_handler(event, context):
     try:
+        # Log the entire event object
+        print("=== INCOMING EVENT ===")
+        print("Event type:", type(event))
+        print("Event contents:", json.dumps(event, indent=2))
+
+        # Check if body exists and its type
+        print("\n=== REQUEST BODY CHECK ===")
+        if 'body' not in event:
+            raise ValueError("No body in event")
+
+        print("Body type:", type(event['body']))
+        if isinstance(event['body'], str):
+            body = json.loads(event['body'])
+        else:
+            body = event['body']
+
+        print("Parsed body:", json.dumps(body, indent=2))
+
         print("=== ENVIRONMENT AND SYSTEM INFO ===")
         # Print all environment variables
         print("\nAll Environment Variables:")
@@ -102,10 +120,16 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        print(f"Error: {str(e)}")
-        # If it's a subprocess error, print the output
+        error_details = {
+            'error_type': type(e).__name__,
+            'error_message': str(e),
+            'error_details': getattr(e, 'args', [])
+        }
+        print("Error details:", json.dumps(error_details, indent=2))
+
         if isinstance(e, subprocess.CalledProcessError):
             print(f"Command output: {e.output.decode()}")
+
         return {
             'statusCode': 500,
             'headers': {
@@ -114,6 +138,7 @@ def lambda_handler(event, context):
             },
             'body': json.dumps({
                 'error': str(e),
+                'error_details': error_details,
                 'status': 'error'
             })
         }
