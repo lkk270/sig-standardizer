@@ -82,6 +82,7 @@ resource "aws_lambda_function" "standardize_text" {
     variables = {
       OPENAI_API_KEY = var.openai_api_key
       PYTHONPATH     = "/opt/python"
+      VERSION        = "1.0.1"
     }
   }
 }
