@@ -19,21 +19,24 @@ def lambda_handler(event, context):
         # Check entire /opt directory structure
         print("\nComplete /opt directory tree:")
         try:
-            print(subprocess.check_output(['find', '/opt', '-type', 'f'], text=True))
+            print(subprocess.check_output(
+                ['find', '/opt', '-type', 'f'], text=True))
         except Exception as e:
             print(f"Error listing /opt directory: {str(e)}")
 
         # Check layer contents
         print("\nLayer libraries:")
         try:
-            print(subprocess.check_output(['ldd', '/opt/lib/tesseract'], text=True))
+            print(subprocess.check_output(
+                ['ldd', '/opt/lib/tesseract'], text=True))
         except Exception as e:
             print(f"Error checking libraries: {str(e)}")
 
         # Check tessdata
         print("\nTessdata contents:")
         try:
-            print(subprocess.check_output(['ls', '-l', '/opt/lib/tessdata'], text=True))
+            print(subprocess.check_output(
+                ['ls', '-l', '/opt/lib/tessdata'], text=True))
         except Exception as e:
             print(f"Error listing tessdata: {str(e)}")
 
@@ -59,7 +62,7 @@ def lambda_handler(event, context):
         # Set environment variables for Tesseract
         os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
         os.environ['TESSDATA_PREFIX'] = '/opt/lib/tessdata'
-        pytesseract.pytesseract.tesseract_cmd = '/opt/lib/tesseract'
+        pytesseract.pytesseract.tesseract_cmd = '/opt/bin/tesseract'
 
         # Parse the request body
         body = json.loads(event['body'])

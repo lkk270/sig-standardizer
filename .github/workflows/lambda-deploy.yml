@@ -100,9 +100,10 @@ jobs:
               
               echo '=== COPYING FILES ==='
               # Copy tesseract binary and verify
-              cp -v /usr/bin/tesseract /layer/opt/lib/
-              chmod 755 /layer/opt/lib/tesseract
-              ls -l /layer/opt/lib/tesseract
+              mkdir -p /layer/opt/bin
+              cp -v /usr/bin/tesseract /layer/opt/bin/
+              chmod 755 /layer/opt/bin/tesseract
+              ls -l /layer/opt/bin/tesseract
 
               # Copy tessdata files
               mkdir -p /layer/opt/lib/tessdata
