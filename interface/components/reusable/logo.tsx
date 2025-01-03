@@ -25,7 +25,7 @@ export const Logo = ({
 	showLgTextSize = true,
 }: LogoProps) => {
 	// const isMobile = useMediaQuery("(max-width: 500px)");
-	const size = "75";
+	const size = "65";
 	return (
 		<Link
 			href="/"
