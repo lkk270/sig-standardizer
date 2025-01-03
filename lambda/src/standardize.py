@@ -37,7 +37,7 @@ def lambda_handler(event, context):
 
         logger.info("Making request to OpenAI API")
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="chatgpt-4o-latest",
             messages=[
                 {"role": "system",
                     "content": "Standardize the following signature block format."},
