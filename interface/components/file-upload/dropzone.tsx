@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Inbox } from "lucide-react";
 import { FileWithStatus } from "@/app/types";
-import { useIsLoading } from "@/hooks/use-is-loading";
+import { useTextProcessing } from "@/hooks/use-text-processing";
 import { cn } from "@/lib/utils";
 
 // Define the props expected by the Dropzone component
@@ -20,7 +20,9 @@ export function Dropzone({
 	className,
 	...props
 }: DropzoneProps) {
-	const { isLoading } = useIsLoading();
+	const { status } = useTextProcessing();
+	const isProcessing = status === "extracting" || status === "standardizing";
+
 	// Initialize state variables using the useState hook
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const [isOverArea, setIsOverArea] = useState(false);
@@ -41,8 +43,8 @@ export function Dropzone({
 
 	// Function to handle drop event
 	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-		if (isLoading) {
-			toast.warning("Must wait for loading to state to finish");
+		if (isProcessing) {
+			toast.warning("Must wait for processing to finish");
 			return;
 		}
 		e.preventDefault();
@@ -98,8 +100,8 @@ export function Dropzone({
 	};
 
 	const handleButtonClick = () => {
-		if (isLoading) {
-			toast.warning("Must wait for loading to state to finish");
+		if (isProcessing) {
+			toast.warning("Must wait for processing to finish");
 			return;
 		}
 		if (fileInputRef.current) {
