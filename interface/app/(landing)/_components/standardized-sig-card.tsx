@@ -3,6 +3,16 @@ import { Card } from "@/components/ui/card";
 import { useTextProcessing } from "@/hooks/use-text-processing";
 import Skeleton from "@/components/reusable/skeleton";
 
+interface MedicationEntry {
+	medication: string;
+	sig_code: string;
+	dosage: string;
+	frequency: string;
+	quantity: string;
+	refills: string;
+	purpose: string | null;
+}
+
 const StandardizedSigCard = () => {
 	const { standardizedText, status } = useTextProcessing();
 	const isLoading = status === "standardizing" || status === "extracting";
@@ -10,31 +20,40 @@ const StandardizedSigCard = () => {
 	const formatSigText = (text: string) => {
 		if (!text) return null;
 
-		// Split the text into individual medication entries
-		return text
-			.split("\n")
-			.map((line, index) => {
-				if (!line.trim()) return null;
+		try {
+			const medications: MedicationEntry[] = JSON.parse(text);
 
-				// Find the index of the first colon
-				const firstColonIndex = line.indexOf(":");
-				if (firstColonIndex === -1) return null;
-
-				const medication = line.substring(0, firstColonIndex);
-				const instructions = line.substring(firstColonIndex + 1);
-
-				return (
-					<div key={index} className="mb-4 bg-primary/20 p-3 rounded-lg">
-						<h4 className="font-semibold text-primary mb-1">
-							{medication.trim()}
-						</h4>
-						<p className="text-sm text-muted-foreground">
-							{instructions.trim()}
+			return medications.map((med, index) => (
+				<div key={index} className="mb-4 bg-primary/20 p-3 rounded-lg">
+					<h4 className="font-semibold text-primary mb-1">{med.medication}</h4>
+					<div className="text-sm text-muted-foreground space-y-1">
+						<p>
+							<span className="font-medium">SIG Code:</span> {med.sig_code}
 						</p>
+						<p>
+							<span className="font-medium">Dosage:</span> {med.dosage}
+						</p>
+						<p>
+							<span className="font-medium">Frequency:</span> {med.frequency}
+						</p>
+						<p>
+							<span className="font-medium">Quantity:</span> {med.quantity}
+						</p>
+						<p>
+							<span className="font-medium">Refills:</span> {med.refills}
+						</p>
+						{med.purpose && (
+							<p>
+								<span className="font-medium">Purpose:</span> {med.purpose}
+							</p>
+						)}
 					</div>
-				);
-			})
-			.filter(Boolean); // Remove null entries
+				</div>
+			));
+		} catch (error) {
+			console.error("Error parsing medication data:", error);
+			return null;
+		}
 	};
 
 	return (
