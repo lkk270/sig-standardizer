@@ -126,7 +126,7 @@ jobs:
           find lambda-layer -type f -ls
           
           echo '=== LAYER CONTENTS BEFORE ZIP ==='
-          ls -lR /layer/opt/
+          ls -lR lambda-layer/opt/
           
           cd lambda-layer
           zip -r ../tesseract-layer.zip .
