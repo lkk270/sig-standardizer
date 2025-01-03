@@ -72,9 +72,8 @@ jobs:
         run: |
           cd lambda
           rm -rf lambda-layer
-          mkdir -p lambda-layer/opt/lib
-          mkdir -p lambda-layer/opt/lib/tessdata
-          
+          mkdir -p lambda-layer
+
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
               set -ex
@@ -100,27 +99,27 @@ jobs:
               
               echo '=== COPYING FILES ==='
               # Copy tesseract binary and verify
-              mkdir -p /layer/opt/bin
-              cp -v /usr/bin/tesseract /layer/opt/bin/
-              chmod 755 /layer/opt/bin/tesseract
-              ls -l /layer/opt/bin/tesseract
+              mkdir -p /layer/bin
+              cp -v /usr/bin/tesseract /layer/bin/
+              chmod 755 /layer/bin/tesseract
+              ls -l /layer/bin/tesseract
 
               # Copy tessdata files
-              mkdir -p /layer/opt/lib/tessdata
-              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/
-              ls -l /layer/opt/lib/tessdata/
+              mkdir -p /layer/lib/tessdata
+              cp -rv /usr/share/tesseract/tessdata/* /layer/lib/tessdata/
+              ls -l /layer/lib/tessdata/
               
               echo '=== COPYING LIBRARIES ==='
               # Copy all required libraries
               ldd /usr/bin/tesseract \
                 | grep -oP '/.*\.so[^ ]*' \
-                | xargs -I{} cp -v {} /layer/opt/lib/
+                | xargs -I{} cp -v {} /layer/lib/
               
               echo '=== VERIFYING LAYER CONTENTS ==='
               find /layer -type f -ls
               
               echo '=== TESTING TESSERACT ==='
-              LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/bin/tesseract --version
+              LD_LIBRARY_PATH=/layer/lib TESSDATA_PREFIX=/layer/lib/tessdata /layer/bin/tesseract --version
             "
           
           echo '=== FINAL LAYER CONTENTS ==='
