@@ -3,6 +3,9 @@ import os
 import openai
 import logging
 
+# If your installed OpenAI version supports these:
+from openai import InvalidRequestError, AuthenticationError, OpenAIError
+
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -45,8 +48,15 @@ def lambda_handler(event, context):
         response = openai.ChatCompletion.create(
             model="gpt-4o-2024-11-20",
             messages=[
-                {"role": "system",
-                 "content": "You are a medical assistant tasked with extracting structured SIG codes from unstructured text. For each medication, output a JSON object with these fields: medication, sig_code, dosage, frequency, quantity, refills, purpose (if available)."},
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a medical assistant tasked with extracting structured SIG codes "
+                        "from unstructured text. For each medication, output a JSON object with "
+                        "these fields: medication, sig_code, dosage, frequency, quantity, refills, "
+                        "purpose (if available)."
+                    )
+                },
                 {"role": "user", "content": text}
             ]
         )
@@ -76,7 +86,9 @@ def lambda_handler(event, context):
                 'status': 'success'
             })
         }
-    except openai.error.InvalidRequestError as e:
+
+    # NOTE: These exceptions are imported directly from openai, rather than openai.error
+    except InvalidRequestError as e:
         logger.error(f"OpenAI API Invalid Request Error: {e}")
         return {
             'statusCode': 400,
@@ -89,7 +101,7 @@ def lambda_handler(event, context):
                 'status': 'error'
             })
         }
-    except openai.error.AuthenticationError as e:
+    except AuthenticationError as e:
         logger.error(f"OpenAI API Authentication Error: {e}")
         return {
             'statusCode': 401,
@@ -102,7 +114,7 @@ def lambda_handler(event, context):
                 'status': 'error'
             })
         }
-    except openai.error.OpenAIError as e:
+    except OpenAIError as e:
         logger.error(f"OpenAI API Error: {e}")
         return {
             'statusCode': 500,
