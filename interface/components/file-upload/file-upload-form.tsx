@@ -6,7 +6,7 @@ import {
 	CardFooter,
 	CardHeader,
 } from "@/components/ui/card";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Trash, RefreshCw, XCircle } from "lucide-react";
 import { Dropzone } from "@/components/file-upload/dropzone";
 import { FileWithStatus } from "@/app/types";
@@ -22,7 +22,7 @@ export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
 	const { isLoading, setIsLoading } = useIsLoading();
 	const { setExtractedText } = useExtractedText();
-	const [isPending, startTransition] = useTransition();
+	// const [isPending, startTransition] = useTransition();
 
 	const updateFileStatus = (
 		status: "uploaded" | "error" | "canceled" | "uploading" | "gotPSU"
@@ -152,9 +152,7 @@ export const FileUploadForm = () => {
 
 					<CardFooter className="pt-4 justify-end">
 						<Button
-							disabled={
-								isLoading || isPending || !file || file.status === "uploaded"
-							}
+							disabled={isLoading || !file || file.status === "uploaded"}
 							onClick={() => handleUpload()}
 							className="w-20 h-8 text-sm"
 						>

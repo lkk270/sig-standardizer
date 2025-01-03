@@ -1,11 +1,9 @@
 "use client";
 
 import { ModeToggle } from "@/components/mode-toggle";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // import dynamic from "next/dynamic";
 import { Logo } from "./logo";
-import { FileUploadButton } from "../file-upload/file-upload-button";
 
 export const Navbar = () => {
 	return (
