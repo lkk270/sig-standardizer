@@ -99,13 +99,15 @@ jobs:
               rpm -ql tesseract
               
               echo '=== COPYING FILES ==='
-              # Copy tesseract binary
+              # Copy tesseract binary and verify
               cp -v /usr/bin/tesseract /layer/opt/lib/
               chmod 755 /layer/opt/lib/tesseract
-              
-              # Create tessdata directory and copy files
+              ls -l /layer/opt/lib/tesseract
+
+              # Copy tessdata files
               mkdir -p /layer/opt/lib/tessdata
-              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/ || echo "No tessdata files found"
+              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/
+              ls -l /layer/opt/lib/tessdata/
               
               echo '=== COPYING LIBRARIES ==='
               # Copy all required libraries
@@ -127,6 +129,9 @@ jobs:
           
           echo '=== FINAL LAYER CONTENTS ==='
           find lambda-layer -type f -ls
+          
+          echo '=== LAYER CONTENTS BEFORE ZIP ==='
+          ls -lR /layer/opt/
           
           cd lambda-layer
           zip -r ../tesseract-layer.zip .
