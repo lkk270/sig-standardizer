@@ -33,17 +33,6 @@ resource "aws_lambda_layer_version" "tesseract" {
   source_code_hash = filebase64sha256("../tesseract-layer.zip")
 }
 
-# Create Lambda layer for OpenCV
-resource "aws_lambda_layer_version" "opencv_layer" {
-  filename             = "../opencv-layer.zip"
-  layer_name           = "opencv_layer"
-  description          = "OpenCV + Pillow + pytesseract"
-  compatible_runtimes  = ["python3.9"]
-
-  # Force update when the zip changes
-  source_code_hash = filebase64sha256("../opencv-layer.zip")
-}
-
 # Create Lambda function for text extraction
 resource "aws_lambda_function" "extract_text" {
   filename         = "../function.zip"
@@ -58,8 +47,7 @@ resource "aws_lambda_function" "extract_text" {
   source_code_hash = filebase64sha256("../function.zip")
 
   layers = [
-    aws_lambda_layer_version.tesseract.arn,
-    aws_lambda_layer_version.opencv_layer.arn
+    aws_lambda_layer_version.tesseract.arn
   ]
 
   tags = {
