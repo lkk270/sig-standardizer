@@ -89,17 +89,21 @@ jobs:
               yum install -y tesseract tesseract-langpack-eng
               yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
-              # Debug: Show installed files
+              # Debug: Show installed files and tessdata location
               echo 'Tesseract package files:'
               rpm -ql tesseract
+              echo 'Tessdata location:'
+              find /usr -name tessdata -type d
 
               # Copy tesseract binary and verify
               cp -v /usr/bin/tesseract /layer/opt/lib/
               chmod 755 /layer/opt/lib/tesseract
               
-              # Copy tessdata files
-              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/
-              chmod -R 755 /layer/opt/lib/tessdata
+              # Copy tessdata files (try multiple possible locations)
+              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/ || \
+              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/ || \
+              cp -rv /usr/local/share/tessdata/* /layer/opt/lib/tessdata/ || \
+              find /usr -name tessdata -type d -exec cp -rv {}/* /layer/opt/lib/tessdata/ \;
               
               # Copy required libraries
               for lib in \$(ldd /usr/bin/tesseract | grep '=>' | awk '{print \$3}'); do
