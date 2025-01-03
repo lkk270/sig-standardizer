@@ -79,45 +79,50 @@ jobs:
             bash -c "
               set -ex
               
-              # Install EPEL and update
+              echo '=== SYSTEM SETUP ==='
               amazon-linux-extras install epel -y
               yum clean all
               yum makecache
               yum update -y
               
-              # Install tesseract and dependencies
+              echo '=== INSTALLING PACKAGES ==='
               yum install -y tesseract tesseract-langpack-eng
               yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
-              # Debug: Show installed files and tessdata location
-              echo 'Tesseract package files:'
+              echo '=== TESSERACT INSTALLATION INFO ==='
+              which tesseract
+              tesseract --version
+              
+              echo '=== PACKAGE FILES ==='
               rpm -ql tesseract
-              echo 'Tessdata location:'
-              find /usr -name tessdata -type d
-
-              # Copy tesseract binary and verify
+              rpm -ql tesseract-langpack-eng
+              
+              echo '=== COPYING FILES ==='
+              # Copy tesseract binary
               cp -v /usr/bin/tesseract /layer/opt/lib/
               chmod 755 /layer/opt/lib/tesseract
               
-              # Copy tessdata files (try multiple possible locations)
-              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/ || \
-              cp -rv /usr/share/tessdata/* /layer/opt/lib/tessdata/ || \
-              cp -rv /usr/local/share/tessdata/* /layer/opt/lib/tessdata/ || \
+              # Find and copy tessdata
               find /usr -name tessdata -type d -exec cp -rv {}/* /layer/opt/lib/tessdata/ \;
               
-              # Copy required libraries
-              for lib in \$(ldd /usr/bin/tesseract | grep '=>' | awk '{print \$3}'); do
-                cp -v \$lib /layer/opt/lib/
+              echo '=== COPYING LIBRARIES ==='
+              # Copy all required libraries
+              ldd /usr/bin/tesseract | while read -r line; do
+                if [[ \$line =~ => ]]; then
+                  lib=\$(echo \$line | awk '{print \$3}')
+                  cp -v \$lib /layer/opt/lib/
+                fi
               done
               
-              chmod -R 755 /layer/opt/lib
-              
-              echo 'Layer contents:'
+              echo '=== VERIFYING LAYER CONTENTS ==='
               find /layer -type f -ls
               
-              echo 'Testing Tesseract:'
+              echo '=== TESTING TESSERACT ==='
               LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/lib/tesseract --version
             "
+          
+          echo '=== FINAL LAYER CONTENTS ==='
+          find lambda-layer -type f -ls
           
           cd lambda-layer
           zip -r ../tesseract-layer.zip .
