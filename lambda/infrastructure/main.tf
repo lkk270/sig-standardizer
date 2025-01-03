@@ -28,7 +28,7 @@ resource "aws_lambda_layer_version" "tesseract" {
   layer_name         = "tesseract"
   description        = "Tesseract OCR binaries and libraries"
   compatible_runtimes = ["python3.9"]
-  
+
   # Force update when zip changes
   source_code_hash = filebase64sha256("../tesseract-layer.zip")
 }

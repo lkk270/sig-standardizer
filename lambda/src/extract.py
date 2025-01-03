@@ -10,9 +10,9 @@ import subprocess
 def lambda_handler(event, context):
     try:
         # Log the entire event object
-        print("=== INCOMING EVENT ===")
-        print("Event type:", type(event))
-        print("Event contents:", json.dumps(event, indent=2))
+        # print("=== INCOMING EVENT ===")
+        # print("Event type:", type(event))
+        # print("Event contents:", json.dumps(event, indent=2))
 
         # Check if body exists and its type
         print("\n=== REQUEST BODY CHECK ===")
@@ -59,14 +59,14 @@ def lambda_handler(event, context):
             print(f"Error listing tessdata: {str(e)}")
 
         # Debug: Print environment variables and file structure
-        print("Environment variables:")
-        print(f"LD_LIBRARY_PATH: {os.environ.get('LD_LIBRARY_PATH')}")
-        print(f"TESSDATA_PREFIX: {os.environ.get('TESSDATA_PREFIX')}")
-        print(f"PATH: {os.environ.get('PATH')}")
+        # print("Environment variables:")
+        # print(f"LD_LIBRARY_PATH: {os.environ.get('LD_LIBRARY_PATH')}")
+        # print(f"TESSDATA_PREFIX: {os.environ.get('TESSDATA_PREFIX')}")
+        # print(f"PATH: {os.environ.get('PATH')}")
 
-        print("\nDirectory contents:")
-        print("/opt contents:")
-        print(subprocess.check_output(['ls', '-lR', '/opt']).decode())
+        # print("\nDirectory contents:")
+        # print("/opt contents:")
+        # print(subprocess.check_output(['ls', '-lR', '/opt']).decode())
 
         print("\nTesseract binary check:")
         tesseract_path = '/opt/bin/tesseract'

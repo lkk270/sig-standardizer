@@ -10,19 +10,6 @@ export async function extractText(
 	imageData: string
 ): Promise<ExtractTextResponse> {
 	try {
-		// Debug logging for server
-		console.log("[Server] Starting text extraction");
-		console.log(
-			"[Server] Lambda URL configured:",
-			!!process.env.NEXT_PUBLIC_LAMBDA_URL
-		);
-		console.log(
-			"[Server] Image data received:",
-			!!imageData,
-			"length:",
-			imageData?.length
-		);
-
 		if (!process.env.NEXT_PUBLIC_LAMBDA_URL) {
 			throw new Error("Lambda URL is not configured");
 		}
@@ -37,19 +24,9 @@ export async function extractText(
 			}),
 		});
 
-		// Debug response
-		console.log("[Server] Response received:", {
-			status: response.status,
-			ok: response.ok,
-			headers: Object.fromEntries(response.headers),
-		});
 
 		if (!response.ok) {
 			const errorText = await response.text();
-			console.error("[Server] Response error:", {
-				status: response.status,
-				body: errorText,
-			});
 			return {
 				success: false,
 				error: `HTTP error! status: ${response.status}`,
@@ -57,7 +34,6 @@ export async function extractText(
 		}
 
 		const data = await response.json();
-		console.log("[Server] Response data:", data);
 
 		return {
 			success: true,
