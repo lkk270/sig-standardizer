@@ -111,14 +111,11 @@ jobs:
               
               echo '=== COPYING LIBRARIES ==='
               # Copy all required libraries
-              while IFS= read -r line; do
-                if [[ \$line =~ .*\\.so.* ]]; then
-                  lib=\$(echo \$line | grep -o '/[^ ]*' | head -1)
-                  if [ -f "\$lib" ]; then
-                    cp -v "\$lib" /layer/opt/lib/
-                  fi
+              ldd /usr/bin/tesseract | grep "=> /" | awk '{print $3}' | while read -r lib; do
+                if [ -f "$lib" ]; then
+                  cp -v "$lib" /layer/opt/lib/
                 fi
-              done < <(ldd /usr/bin/tesseract)
+              done
               
               echo '=== VERIFYING LAYER CONTENTS ==='
               find /layer -type f -ls
