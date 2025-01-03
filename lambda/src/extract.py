@@ -24,22 +24,20 @@ def preprocess_image(image_bytes):
 
 
 def lambda_handler(event, context):
-    """
-    AWS Lambda handler to extract text from an image using Tesseract OCR.
-    """
     try:
-        # Parse and validate the incoming request
+        print("Step 1: Checking event body")
         if 'body' not in event:
             raise ValueError("No body in event")
 
-        # Parse the body as JSON
+        print("Step 2: Parsing event['body']")
         body = json.loads(event['body']) if isinstance(
             event['body'], str) else event['body']
 
+        print("Step 3: Checking for image in body")
         if not body.get('image'):
             raise ValueError("No image data provided")
 
-        # Decode the base64 image data
+        print("Step 4: Splitting base64 data")
         image_parts = body['image'].split(',')
         if len(image_parts) != 2:
             raise ValueError("Invalid image data format")
@@ -47,19 +45,24 @@ def lambda_handler(event, context):
         image_data = image_parts[1]
         image_bytes = base64.b64decode(image_data)
 
-        # Preprocess the image
+        print("Step 5: Preprocessing image")
         processed_image = preprocess_image(image_bytes)
 
-        # Configure Tesseract environment
+        print("Step 6: Setting Tesseract environment variables")
         os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
         os.environ['TESSDATA_PREFIX'] = '/opt/lib/tessdata'
         pytesseract.pytesseract.tesseract_cmd = '/opt/bin/tesseract'
 
-        # Perform OCR using Tesseract with optimized configurations
-        custom_config = r'--oem 3 --psm 6'  # OCR Engine Mode and Page Segmentation Mode
+        print("Step 7: Checking Tesseract version")
+        version = pytesseract.get_tesseract_version()
+        print("Tesseract version:", version)
+
+        print("Step 8: Calling pytesseract.image_to_string")
+        custom_config = r'--oem 3 --psm 6'
         extracted_text = pytesseract.image_to_string(
             processed_image, config=custom_config)
 
+        print("Step 9: Returning OCR result")
         return {
             'statusCode': 200,
             'headers': {
@@ -73,12 +76,12 @@ def lambda_handler(event, context):
         }
 
     except Exception as e:
-        # Capture and return detailed error information
         error_details = {
             'error_type': type(e).__name__,
             'error_message': str(e),
             'error_details': getattr(e, 'args', [])
         }
+        print("Exception caught:", error_details)
 
         return {
             'statusCode': 500,
