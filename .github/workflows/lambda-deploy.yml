@@ -120,7 +120,7 @@ jobs:
               find /layer -type f -ls
               
               echo '=== TESTING TESSERACT ==='
-              LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/lib/tesseract --version
+              LD_LIBRARY_PATH=/layer/opt/lib TESSDATA_PREFIX=/layer/opt/lib/tessdata /layer/opt/bin/tesseract --version
             "
           
           echo '=== FINAL LAYER CONTENTS ==='
