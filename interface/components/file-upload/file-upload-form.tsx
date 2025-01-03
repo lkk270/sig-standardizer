@@ -35,7 +35,6 @@ export const FileUploadForm = () => {
 	const handleUpload = async () => {
 		if (isLoading || !file) return;
 
-		console.log("Starting upload...");
 		setIsLoading(true);
 
 		try {
@@ -49,20 +48,16 @@ export const FileUploadForm = () => {
 
 			// Call extractText using the Base64 string
 			const result = await extractText(base64);
-			console.log(result);
 			if (!result.success) {
 				throw new Error(result.error);
 			}
-			console.log("Extracted text:", result.text);
 			setExtractedText(result.text || "");
 			updateFileStatus("uploaded");
 		} catch (error) {
 			console.error("Error:", error);
 			updateFileStatus("error");
 		} finally {
-			console.log("Ending upload...");
 			setIsLoading(false);
-			console.log("isLoading set to false");
 		}
 	};
 

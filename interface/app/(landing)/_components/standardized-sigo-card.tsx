@@ -7,7 +7,6 @@ import Skeleton from "@/components/reusable/skeleton";
 const StandardizedSigoCard = () => {
 	const { extractedText } = useExtractedText();
 	const { isLoading } = useIsLoading();
-	console.log(isLoading);
 	return (
 		<Card className="p-4">
 			<h3 className="font-bold mb-2">Standardized SIGO</h3>
