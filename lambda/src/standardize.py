@@ -13,12 +13,21 @@ def lambda_handler(event, context):
         # Log the incoming event
         logger.info(f"Received event: {json.dumps(event)}")
 
+        # Log all environment variables (excluding sensitive values)
+        logger.info("Environment variables present:")
+        for key in os.environ:
+            logger.info(
+                f"- {key}: {'[MASKED]' if 'KEY' in key.upper() else os.environ[key]}")
+
         # Parse the request body
         body = json.loads(event['body'])
         text = body['text']
 
         # Log OpenAI API key presence (not the key itself)
         api_key = os.environ.get('OPENAI_API_KEY')
+        logger.info(f"OpenAI API key present: {api_key is not None}")
+        logger.info(f"OpenAI API key length: {len(api_key) if api_key else 0}")
+
         if not api_key:
             raise ValueError(
                 "OpenAI API key not found in environment variables")
