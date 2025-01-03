@@ -1,7 +1,7 @@
 import { FileUploadForm } from "@/components/file-upload/file-upload-form";
 import { Navbar } from "@/components/reusable/navbar";
 import ExtractedTextCard from "./_components/extracted-text-card";
-import StandardizedSigoCard from "./_components/standardized-sigo-card";
+import StandardizedSigCard from "./_components/standardized-sig-card";
 
 export default function Home() {
 	return (
@@ -15,7 +15,7 @@ export default function Home() {
 				<div className="max-w-6xl mx-auto w-full">
 					<div className="grid md:grid-cols-2 gap-4">
 						<ExtractedTextCard />
-						<StandardizedSigoCard />
+						<StandardizedSigCard />
 					</div>
 				</div>
 			</div>

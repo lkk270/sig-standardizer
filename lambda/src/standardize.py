@@ -40,7 +40,7 @@ def lambda_handler(event, context):
             model="gpt-4o-2024-11-20",
             messages=[
                 {"role": "system",
-                    "content": "Standardize the following signature block format."},
+                 "content": "You are a medical assistant tasked with extracting structured SIG codes from unstructured text. SIG codes standardize medication instructions, specifying name, dosage, frequency, quantity, refills, and purpose (if available). Your task is to process the input text, ignore irrelevant information (like names, addresses, and other unrelated details), and output the SIG codes clearly and consistently. Use this format for each SIG code:\n\n[Medication Name]: Take [dosage] [frequency] for [purpose, if available]. Quantity: [quantity]. Refills: [number of refills or 'None'].\n\nIgnore any irrelevant data."},
                 {"role": "user", "content": text}
             ]
         )
