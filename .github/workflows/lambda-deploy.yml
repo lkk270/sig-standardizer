@@ -88,7 +88,7 @@ jobs:
               echo '=== INSTALLING PACKAGES ==='
               yum install -y which
               yum list available | grep tesseract
-              yum install -y tesseract tesseract-langpack-eng
+              yum install -y tesseract
               yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
               echo '=== TESSERACT INSTALLATION INFO ==='
@@ -97,7 +97,6 @@ jobs:
               
               echo '=== PACKAGE FILES ==='
               rpm -ql tesseract
-              rpm -ql tesseract-langpack-eng
               
               echo '=== COPYING FILES ==='
               # Copy tesseract binary
