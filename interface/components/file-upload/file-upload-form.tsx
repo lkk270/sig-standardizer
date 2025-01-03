@@ -54,7 +54,9 @@ export const FileUploadForm = () => {
 
 			// Now standardize the extracted text
 			setStatus("standardizing");
+			console.log(extractResult.text);
 			const standardizeResult = await standardizeText(extractResult.text || "");
+			console.log(standardizeResult);
 			if (!standardizeResult.success) {
 				throw new Error(standardizeResult.error);
 			}
