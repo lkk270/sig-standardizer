@@ -16,11 +16,12 @@ import { cn, formatFileSize } from "@/lib/utils";
 import { useIsLoading } from "@/hooks/use-is-loading";
 import { Button } from "@/components/ui/button";
 import { extractText } from "@/app/(landing)/actions/extract-text";
+import { useExtractedText } from "@/hooks/use-extracted-text";
 
 export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
 	const { isLoading, setIsLoading } = useIsLoading();
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const { setExtractedText } = useExtractedText();
 	const [isPending, startTransition] = useTransition();
 
 	const updateFileStatus = (
@@ -33,33 +34,36 @@ export const FileUploadForm = () => {
 
 	const handleUpload = async () => {
 		if (isLoading || !file) return;
-		setIsLoading(true);
-		updateFileStatus("uploading");
 
-		new Promise<string>((resolve, reject) => {
-			const reader = new FileReader();
-			reader.readAsDataURL(file.file);
-			reader.onload = () => resolve(reader.result as string);
-			reader.onerror = reject;
-		})
-			.then((base64) => {
-				startTransition(async () => {
-					const result = await extractText(base64);
-					console.log(result);
-					if (!result.success) {
-						throw new Error(result.error);
-					}
-					console.log("Extracted text:", result.text);
-					updateFileStatus("uploaded");
-				});
-			})
-			.catch((error) => {
-				console.error("Error:", error);
-				updateFileStatus("error");
-			})
-			.finally(() => {
-				setIsLoading(false);
+		console.log("Starting upload...");
+		setIsLoading(true);
+
+		try {
+			// Convert file to Base64
+			const base64 = await new Promise<string>((resolve, reject) => {
+				const reader = new FileReader();
+				reader.readAsDataURL(file.file);
+				reader.onload = () => resolve(reader.result as string);
+				reader.onerror = reject;
 			});
+
+			// Call extractText using the Base64 string
+			const result = await extractText(base64);
+			console.log(result);
+			if (!result.success) {
+				throw new Error(result.error);
+			}
+			console.log("Extracted text:", result.text);
+			setExtractedText(result.text || "");
+			updateFileStatus("uploaded");
+		} catch (error) {
+			console.error("Error:", error);
+			updateFileStatus("error");
+		} finally {
+			console.log("Ending upload...");
+			setIsLoading(false);
+			console.log("isLoading set to false");
+		}
 	};
 
 	const handleRemoveFile = () => {
@@ -73,10 +77,10 @@ export const FileUploadForm = () => {
 	};
 
 	return (
-		<Card className="flex flex-col h-72 max-w-full w-full border border-primary/10 rounded-xl overflow-hidden">
+		<Card className="flex flex-col max-h-72 max-w-full w-full border border-primary/10 rounded-xl overflow-hidden">
 			<div className={cn("w-full grid")}></div>
 			<div className="flex justify-center w-full">
-				<CardContent className="flex flex-col flex-grow justify-center max-w-[800px] w-full">
+				<CardContent className="pb-0 flex flex-col flex-grow justify-center max-w-[800px] w-full">
 					<CardHeader>
 						<Dropzone
 							onChangeSingleFile={(newFile) => setFile(newFile)}
@@ -146,9 +150,11 @@ export const FileUploadForm = () => {
 						)}
 					</div>
 
-					<CardFooter className="pt-10 justify-end">
+					<CardFooter className="pt-4 justify-end">
 						<Button
-							disabled={isLoading || !file || file.status === "uploaded"}
+							disabled={
+								isLoading || isPending || !file || file.status === "uploaded"
+							}
 							onClick={() => handleUpload()}
 							className="w-20 h-8 text-sm"
 						>
