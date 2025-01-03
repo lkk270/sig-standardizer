@@ -17,10 +17,9 @@ def preprocess_image(image_bytes):
     # Convert to grayscale
     image = image.convert('L')
     # Resize to double the original size, using LANCZOS
-    image = image.resize(
-        (image.width * 2, image.height * 2),
-        Image.LANCZOS  # Works in older Pillow versions
-    )
+    new_width = int(image.width * 1.25)
+    new_height = int(image.height * 1.25)
+    image = image.resize((new_width, new_height), Image.LANCZOS)
     # Apply Gaussian blur for noise reduction
     image = image.filter(ImageFilter.GaussianBlur(radius=1))
     return image
