@@ -92,7 +92,7 @@ jobs:
               # Debug: Show installed files
               echo 'Tesseract package files:'
               rpm -ql tesseract
-              
+
               # Copy tesseract binary and verify
               cp -v /usr/bin/tesseract /layer/opt/lib/
               chmod 755 /layer/opt/lib/tesseract
