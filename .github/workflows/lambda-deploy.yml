@@ -86,11 +86,13 @@ jobs:
               yum update -y
               
               echo '=== INSTALLING PACKAGES ==='
-              yum install -y tesseract tesseract-langpack-eng
+              yum install -y which
+              yum list available | grep tesseract
+              yum install -y tesseract
               yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
               
               echo '=== TESSERACT INSTALLATION INFO ==='
-              which tesseract
+              command -v tesseract
               tesseract --version
               
               echo '=== PACKAGE FILES ==='
