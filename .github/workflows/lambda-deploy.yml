@@ -83,20 +83,20 @@ jobs:
               yum clean all
               yum makecache
               yum update -y
-              
+
               echo '=== INSTALLING PACKAGES ==='
               yum install -y which
               yum list available | grep tesseract
               yum install -y tesseract
               yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
-              
+
               echo '=== TESSERACT INSTALLATION INFO ==='
               command -v tesseract
               tesseract --version
-              
+
               echo '=== PACKAGE FILES ==='
               rpm -ql tesseract
-              
+
               echo '=== COPYING FILES ==='
               # Copy tesseract binary and verify
               mkdir -p /layer/bin
