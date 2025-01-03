@@ -111,10 +111,8 @@ jobs:
               
               echo '=== COPYING LIBRARIES ==='
               # Copy all required libraries
-              ldd /usr/bin/tesseract | grep "=> /" | awk '{print $3}' | while read -r lib; do
-                if [ -f "$lib" ]; then
-                  cp -v "$lib" /layer/opt/lib/
-                fi
+              for lib in \$(ldd /usr/bin/tesseract | grep "=> /" | cut -d " " -f 3); do
+                cp -v "\$lib" /layer/opt/lib/
               done
               
               echo '=== VERIFYING LAYER CONTENTS ==='
