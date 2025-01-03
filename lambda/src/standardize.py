@@ -2,9 +2,7 @@ import json
 import os
 import openai
 import logging
-
-# If your installed OpenAI version supports these:
-from openai import InvalidRequestError, AuthenticationError, OpenAIError
+from openai import OpenAI
 
 # Configure logging
 logger = logging.getLogger()
@@ -18,62 +16,46 @@ def lambda_handler(event, context):
 
         # Log all environment variables (excluding sensitive values)
         logger.info("Environment variables present:")
-        for key, value in os.environ.items():
-            masked_value = "[MASKED]" if "KEY" in key.upper() else value
-            logger.info(f"- {key}: {masked_value}")
+        for key in os.environ:
+            logger.info(
+                f"- {key}: {'[MASKED]' if 'KEY' in key.upper() else os.environ[key]}")
 
         # Parse the request body
-        try:
-            body = json.loads(event.get('body', '{}'))
-            text = body.get('text')
-            if not text:
-                raise ValueError("Request body must contain 'text' key")
-        except json.JSONDecodeError as e:
-            logger.error("Invalid JSON in request body", exc_info=True)
-            raise ValueError("Invalid JSON in request body") from e
+        body = json.loads(event['body'])
+        text = body['text']
 
-        # Validate OpenAI API Key
+        # Log OpenAI API key presence (not the key itself)
         api_key = os.environ.get('OPENAI_API_KEY')
+        logger.info(f"OpenAI API key present: {api_key is not None}")
+        logger.info(f"OpenAI API key length: {len(api_key) if api_key else 0}")
+
         if not api_key:
-            logger.error(
-                "OpenAI API key is missing from environment variables")
             raise ValueError(
                 "OpenAI API key not found in environment variables")
 
-        openai.api_key = api_key
-        logger.info("OpenAI API key validated successfully")
+        # Initialize OpenAI client
+        client = OpenAI(api_key=api_key)
 
         # Call OpenAI API
         logger.info("Making request to OpenAI API")
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-2024-11-20",
+        response = client.chat.completions.create(
+            model="gpt-4",
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "You are a medical assistant tasked with extracting structured SIG codes "
-                        "from unstructured text. For each medication, output a JSON object with "
-                        "these fields: medication, sig_code, dosage, frequency, quantity, refills, "
-                        "purpose (if available)."
-                    )
+                    "content": """You are a medical assistant tasked with extracting structured SIG codes from unstructured text. Format each medication on a new line as:
+
+[Medication Name]: Take [dosage] [frequency] for [purpose, if available]. Quantity: [quantity]. Refills: [number of refills or 'None'].
+
+Keep the format consistent and separate each medication with a newline. Do not include any other text or formatting."""
                 },
                 {"role": "user", "content": text}
             ]
         )
 
         # Process the response
-        raw_response = response['choices'][0]['message']['content']
-        logger.info(f"Raw response from OpenAI: {raw_response}")
-
-        # Convert the output to JSON
-        try:
-            medications = json.loads(raw_response)
-            logger.info("Successfully parsed OpenAI response into JSON")
-        except json.JSONDecodeError as e:
-            logger.error(
-                "Error parsing OpenAI response into JSON", exc_info=True)
-            raise ValueError(
-                "Failed to parse OpenAI response into JSON") from e
+        standardized_text = response.choices[0].message.content
+        logger.info("Successfully received response from OpenAI")
 
         return {
             'statusCode': 200,
@@ -82,39 +64,12 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'medications': medications,
+                'text': standardized_text,
                 'status': 'success'
             })
         }
 
-    # NOTE: These exceptions are imported directly from openai, rather than openai.error
-    except InvalidRequestError as e:
-        logger.error(f"OpenAI API Invalid Request Error: {e}")
-        return {
-            'statusCode': 400,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({
-                'error': f"OpenAI API Invalid Request Error: {e}",
-                'status': 'error'
-            })
-        }
-    except AuthenticationError as e:
-        logger.error(f"OpenAI API Authentication Error: {e}")
-        return {
-            'statusCode': 401,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({
-                'error': f"OpenAI API Authentication Error: {e}",
-                'status': 'error'
-            })
-        }
-    except OpenAIError as e:
+    except openai.APIError as e:
         logger.error(f"OpenAI API Error: {e}")
         return {
             'statusCode': 500,
@@ -123,7 +78,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'error': f"OpenAI API Error: {e}",
+                'error': f"OpenAI API Error: {str(e)}",
                 'status': 'error'
             })
         }
@@ -140,7 +95,7 @@ def lambda_handler(event, context):
                 'status': 'error'
             })
         }
-    except Exception:
+    except Exception as e:
         logger.error("Unexpected error occurred", exc_info=True)
         return {
             'statusCode': 500,
