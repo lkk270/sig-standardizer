@@ -28,7 +28,7 @@ def lambda_handler(event, context):
         print("\nLayer libraries:")
         try:
             print(subprocess.check_output(
-                ['ldd', '/opt/lib/tesseract'], text=True))
+                ['ldd', '/opt/bin/tesseract'], text=True))
         except Exception as e:
             print(f"Error checking libraries: {str(e)}")
 
@@ -51,7 +51,7 @@ def lambda_handler(event, context):
         print(subprocess.check_output(['ls', '-lR', '/opt']).decode())
 
         print("\nTesseract binary check:")
-        tesseract_path = '/opt/lib/tesseract'
+        tesseract_path = '/opt/bin/tesseract'
         if os.path.exists(tesseract_path):
             print(f"Tesseract exists at {tesseract_path}")
             print(

@@ -127,7 +127,12 @@ jobs:
           find lambda-layer -type f -ls
           
           echo '=== LAYER CONTENTS BEFORE ZIP ==='
-          ls -lR lambda-layer/opt/
+          echo "== Full layer directory structure =="
+          find lambda-layer -type f -ls
+          
+          echo "== Verifying critical files =="
+          ls -l lambda-layer/opt/bin/tesseract
+          ls -l lambda-layer/opt/lib/tessdata/eng.traineddata
           
           cd lambda-layer
           zip -r ../tesseract-layer.zip .
