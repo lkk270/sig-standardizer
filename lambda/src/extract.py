@@ -67,8 +67,20 @@ def lambda_handler(event, context):
         # Parse the request body
         body = json.loads(event['body'])
 
+        # Debug logging
+        print("Request body:", body)
+        print("Image data type:", type(body.get('image')))
+
+        # Validate image data
+        if not body.get('image'):
+            raise ValueError("No image data provided")
+
         # Get the base64 encoded image
-        image_data = body['image'].split(',')[1]
+        image_parts = body['image'].split(',')
+        if len(image_parts) != 2:
+            raise ValueError("Invalid image data format")
+
+        image_data = image_parts[1]
         image_bytes = base64.b64decode(image_data)
 
         # Open the image using PIL
