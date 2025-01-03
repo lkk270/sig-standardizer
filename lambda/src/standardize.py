@@ -55,7 +55,22 @@ For each medication, provide a JSON object with the following fields:
 - refills: Number of refills or "None"
 - purpose: The purpose of the medication if specified, or null if not provided
 
-Format the output as a JSON array of objects. Use standard medical abbreviations in the sig_code:
+Format the output as a valid JSON array of objects, with no additional text. Example:
+{
+    "medications": [
+        {
+            "medication": "Amoxicillin",
+            "sig_code": "1 CAP PO Q8H",
+            "dosage": "500 mg",
+            "frequency": "every 8 hours",
+            "quantity": "30 capsules",
+            "refills": "None",
+            "purpose": null
+        }
+    ]
+}
+
+Use standard medical abbreviations in the sig_code:
 - PO: by mouth
 - QD: once daily
 - BID: twice daily
@@ -64,16 +79,21 @@ Format the output as a JSON array of objects. Use standard medical abbreviations
 - Q#H: every # hours
 - PRN: as needed
 - TAB: tablet
-- CAP: capsule""",
+- CAP: capsule"""
                 },
-                {"role": "user", "content": text},
-            ],
-            response_format={"type": "json_object"},
+                {"role": "user", "content": text}
+            ]
         )
 
         # Process the response
-        standardized_text = json.loads(response.choices[0].message.content)
-        logger.info("Successfully received response from OpenAI")
+        try:
+            response_text = response.choices[0].message.content.strip()
+            standardized_text = json.loads(response_text)
+            logger.info(
+                "Successfully received and parsed response from OpenAI")
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse OpenAI response as JSON: {e}")
+            raise ValueError("Invalid JSON response from OpenAI") from e
 
         return {
             "statusCode": 200,
