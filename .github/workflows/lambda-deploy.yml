@@ -75,28 +75,6 @@ jobs:
           zip -r ../tesseract-layer.zip .
           cd ..
 
-      - name: Create OpenCV Layer
-        run: |
-          cd lambda
-          rm -rf opencv-layer
-          mkdir -p opencv-layer/python
-
-          # Install OpenCV and its dependencies
-          docker run --rm -v $(pwd)/opencv-layer:/layer amazonlinux:2 \
-            bash -c "
-              set -ex
-              yum install -y python3 python3-pip
-              mkdir -p /layer/python/lib/python3.9/site-packages
-              pip3 install --target=/layer/python/lib/python3.9/site-packages opencv-python-headless Pillow pytesseract
-
-              # Strip unneeded symbols from .so files
-              find /layer/python/lib/python3.9/site-packages -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
-            "
-
-          cd opencv-layer
-          zip -r ../opencv-layer.zip .
-          cd ..
-
       - name: Create Pillow and Pytesseract Layer
         run: |
           cd lambda
