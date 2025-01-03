@@ -1,7 +1,7 @@
 import { FileUploadForm } from "@/components/file-upload/file-upload-form";
 import { Navbar } from "@/components/reusable/navbar";
-import { Card } from "@/components/ui/card";
 import ExtractedTextCard from "./_components/extracted-text-card";
+import StandardizedSigoCard from "./_components/standardized-sigo-card";
 
 export default function Home() {
 	return (
@@ -15,10 +15,7 @@ export default function Home() {
 				<div className="max-w-6xl mx-auto w-full">
 					<div className="grid md:grid-cols-2 gap-4">
 						<ExtractedTextCard />
-						<Card className="p-4">
-							<h3 className="font-bold mb-2">Standardized SIGO</h3>
-							<div className="w-full h-[400px] bg-muted rounded-lg"></div>
-						</Card>
+						<StandardizedSigoCard />
 					</div>
 				</div>
 			</div>

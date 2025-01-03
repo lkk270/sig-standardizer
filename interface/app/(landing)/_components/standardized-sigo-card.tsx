@@ -4,13 +4,13 @@ import { useExtractedText } from "@/hooks/use-extracted-text";
 import { useIsLoading } from "@/hooks/use-is-loading";
 import Skeleton from "@/components/reusable/skeleton";
 
-const ExtractedTextCard = () => {
+const StandardizedSigoCard = () => {
 	const { extractedText } = useExtractedText();
 	const { isLoading } = useIsLoading();
 	console.log(isLoading);
 	return (
 		<Card className="p-4">
-			<h3 className="font-bold mb-2">Extracted Text</h3>
+			<h3 className="font-bold mb-2">Standardized SIGO</h3>
 			<div className="p-4 w-full h-[400px] bg-muted rounded-lg">
 				{isLoading ? (
 					<div className="space-y-2">
@@ -19,11 +19,11 @@ const ExtractedTextCard = () => {
 						<Skeleton className="h-4 w-5/6" />
 					</div>
 				) : (
-					extractedText || "No text extracted yet."
+					extractedText || "Oh Sigo, where are you?"
 				)}
 			</div>
 		</Card>
 	);
 };
 
-export default ExtractedTextCard;
+export default StandardizedSigoCard;
