@@ -39,7 +39,10 @@ jobs:
           docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
             bash -c "
               set -ex
-              yum install -y epel-release
+              yum install -y amazon-linux-extras
+              amazon-linux-extras install epel -y
+              yum clean all
+              yum makecache
               yum install -y tesseract libstdc++ libgomp libtiff libpng libjpeg leptonica
               mkdir -p /layer/python/lib/python3.9/site-packages
               pip install --target=/layer/python/lib/python3.9/site-packages opencv-python-headless pytesseract Pillow
