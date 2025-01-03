@@ -47,6 +47,10 @@ jobs:
               yum install -y tesseract libstdc++ libgomp libtiff libpng libjpeg leptonica
               mkdir -p /layer/python/lib/python3.9/site-packages
               pip3 install --target=/layer/python/lib/python3.9/site-packages opencv-python-headless pytesseract Pillow
+
+              # Remove all language files except English
+              rm -rf /usr/share/tesseract/tessdata/*
+              cp /usr/share/tesseract/tessdata/eng.traineddata /layer/lib/tessdata/
             "
 
           cd lambda-layer
