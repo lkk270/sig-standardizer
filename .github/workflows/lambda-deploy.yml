@@ -87,10 +87,6 @@ jobs:
         run: |
           cd lambda/infrastructure
           terraform init -upgrade
-
-      - name: Select Terraform Workspace
-        run: |
-          cd lambda/infrastructure
           terraform workspace select prod || terraform workspace new prod
 
       - name: Terraform Plan
@@ -99,11 +95,11 @@ jobs:
           cd lambda/infrastructure
           terraform plan -out=tfplan \
             -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
-        continue-on-error: true
 
       - name: Check Terraform Plan Exit Code
         run: |
-          if [ -s lambda/infrastructure/tfplan ]; then
+          cd lambda/infrastructure
+          if [ -s tfplan ]; then
             echo "Terraform plan succeeded with changes."
             echo "apply_plan=true" >> $GITHUB_ENV
           else
