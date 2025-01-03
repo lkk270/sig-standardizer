@@ -48,9 +48,12 @@ jobs:
               mkdir -p /layer/python/lib/python3.9/site-packages
               pip3 install --target=/layer/python/lib/python3.9/site-packages opencv-python-headless pytesseract Pillow
 
+              # Download English language data if not present
+              curl -L https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata -o /usr/share/tesseract/tessdata/eng.traineddata
+
               # Remove all language files except English
               rm -rf /usr/share/tesseract/tessdata/*
-              cp /usr/share/tesseract/tessdata/eng.traineddata /layer/lib/tessdata/
+              cp /path/to/eng.traineddata /layer/lib/tessdata/
             "
 
           cd lambda-layer
