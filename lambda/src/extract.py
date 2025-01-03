@@ -43,7 +43,7 @@ def lambda_handler(event, context):
         image_data = image_parts[1]
         image_bytes = base64.b64decode(image_data)
 
-        processed_image = preprocess_image(image_bytes)
+        processed_image = image_bytes
 
         # Configure Tesseract environment
         os.environ['LD_LIBRARY_PATH'] = '/opt/lib'
