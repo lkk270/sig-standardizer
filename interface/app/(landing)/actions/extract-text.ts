@@ -32,6 +32,7 @@ export async function extractText(
 		}
 
 		const data = await response.json();
+		console.log(data);
 
 		return {
 			success: true,

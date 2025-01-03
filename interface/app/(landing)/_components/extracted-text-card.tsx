@@ -10,7 +10,7 @@ const ExtractedTextCard = () => {
 	return (
 		<Card className="p-4">
 			<h3 className="font-bold mb-2">Extracted Text</h3>
-			<div className="p-4 w-full h-[400px] bg-muted rounded-lg">
+			<div className="overflow-y-auto p-4 w-full h-[400px] bg-muted rounded-lg">
 				{isLoading ? (
 					<div className="space-y-2">
 						<Skeleton className="h-4 w-3/4" />
