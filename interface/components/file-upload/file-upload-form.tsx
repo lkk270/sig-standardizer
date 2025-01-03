@@ -20,7 +20,6 @@ import { extractText } from "@/app/(landing)/actions/extract-text";
 export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
 	const { isLoading, setIsLoading } = useIsLoading();
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [isPending, startTransition] = useTransition();
 
 	const updateFileStatus = (
@@ -73,10 +72,10 @@ export const FileUploadForm = () => {
 	};
 
 	return (
-		<Card className="flex flex-col h-72 max-w-full w-full border border-primary/10 rounded-xl overflow-hidden">
+		<Card className="flex flex-col max-h-72 max-w-full w-full border border-primary/10 rounded-xl overflow-hidden">
 			<div className={cn("w-full grid")}></div>
 			<div className="flex justify-center w-full">
-				<CardContent className="flex flex-col flex-grow justify-center max-w-[800px] w-full">
+				<CardContent className="pb-0 flex flex-col flex-grow justify-center max-w-[800px] w-full">
 					<CardHeader>
 						<Dropzone
 							onChangeSingleFile={(newFile) => setFile(newFile)}
@@ -146,9 +145,11 @@ export const FileUploadForm = () => {
 						)}
 					</div>
 
-					<CardFooter className="pt-10 justify-end">
+					<CardFooter className="pt-4 justify-end">
 						<Button
-							disabled={isLoading || !file || file.status === "uploaded"}
+							disabled={
+								isLoading || isPending || !file || file.status === "uploaded"
+							}
 							onClick={() => handleUpload()}
 							className="w-20 h-8 text-sm"
 						>

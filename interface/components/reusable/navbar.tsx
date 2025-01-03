@@ -17,9 +17,9 @@ export const Navbar = () => {
 			<Logo showText={true} />
 
 			<div className="ml-auto justify-end w-full flex items-center gap-x-5">
-				<FileUploadButton mode="modal" asChild>
+				{/* <FileUploadButton>
 					<Button size="sm">Upload</Button>
-				</FileUploadButton>
+				</FileUploadButton> */}
 				<div className="flex flex-row gap-x-5 items-center">
 					<ModeToggle />
 				</div>
