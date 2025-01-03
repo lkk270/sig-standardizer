@@ -46,7 +46,7 @@ jobs:
                   --implementation cp \
                   --python-version 3.9 \
                   --only-binary=:all: \
-                  pillow pytesseract
+                  pillow pytesseract opencv-python-headless
             else
               pip install --target ./package \
                   openai
