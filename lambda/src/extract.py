@@ -9,6 +9,34 @@ import subprocess
 
 def lambda_handler(event, context):
     try:
+        print("=== ENVIRONMENT AND SYSTEM INFO ===")
+        # Print all environment variables
+        print("\nAll Environment Variables:")
+        for key, value in os.environ.items():
+            print(f"{key}: {value}")
+
+        print("\n=== DIRECTORY STRUCTURE ===")
+        # Check entire /opt directory structure
+        print("\nComplete /opt directory tree:")
+        try:
+            print(subprocess.check_output(['find', '/opt', '-type', 'f'], text=True))
+        except Exception as e:
+            print(f"Error listing /opt directory: {str(e)}")
+
+        # Check layer contents
+        print("\nLayer libraries:")
+        try:
+            print(subprocess.check_output(['ldd', '/opt/lib/tesseract'], text=True))
+        except Exception as e:
+            print(f"Error checking libraries: {str(e)}")
+
+        # Check tessdata
+        print("\nTessdata contents:")
+        try:
+            print(subprocess.check_output(['ls', '-l', '/opt/lib/tessdata'], text=True))
+        except Exception as e:
+            print(f"Error listing tessdata: {str(e)}")
+
         # Debug: Print environment variables and file structure
         print("Environment variables:")
         print(f"LD_LIBRARY_PATH: {os.environ.get('LD_LIBRARY_PATH')}")
