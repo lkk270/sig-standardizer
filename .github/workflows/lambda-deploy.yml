@@ -1,5 +1,5 @@
 name: Deploy Lambda Functions
-
+ 
 on:
   push:
     branches: [main]
@@ -29,71 +29,6 @@ jobs:
         with:
           terraform_version: "1.5.7"
 
-      - name: Create Tesseract Layer
-        run: |
-          cd lambda
-          rm -rf lambda-layer
-          mkdir -p lambda-layer/python
-
-          # Install Tesseract and its dependencies
-          docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
-            bash -c "
-              set -ex
-              yum install -y amazon-linux-extras
-              amazon-linux-extras install epel -y
-              yum install -y python3 python3-pip
-              yum clean all
-              yum makecache
-              yum install -y tesseract libstdc++ libgomp libtiff libpng libjpeg leptonica
-
-              # Remove leftover yum cache, docs, man pages, etc.
-              rm -rf /var/cache/yum
-              rm -rf /usr/share/doc
-              rm -rf /usr/share/man
-              find /usr/lib -name '*.a' -delete
-
-              # Strip unneeded symbols from .so libraries
-              find /usr/lib* /usr/lib64* -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
-
-              # Possibly remove any fonts or configs you don't need
-              rm -rf /usr/share/fonts/*
-
-              # Create the tessdata directory in the layer
-              mkdir -p /layer/lib/tessdata
-
-              # Download English language data
-              curl -L https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata -o /usr/share/tesseract/tessdata/eng.traineddata
-
-              # Remove everything except eng.traineddata in /usr/share/tesseract/tessdata
-              find /usr/share/tesseract/tessdata -type f -name '*.traineddata' ! -name 'eng.traineddata' -exec rm {} \;
-
-              # Copy eng.traineddata to the layer
-              cp /usr/share/tesseract/tessdata/eng.traineddata /layer/lib/tessdata/
-            "
-
-          cd lambda-layer
-          zip -r ../tesseract-layer.zip .
-          cd ..
-
-      - name: Create Pillow and Pytesseract Layer
-        run: |
-          cd lambda
-          rm -rf pytesseract-layer
-          mkdir -p pytesseract-layer/python
-
-          # Install Pillow and pytesseract
-          docker run --rm -v $(pwd)/pytesseract-layer:/layer amazonlinux:2 \
-            bash -c "
-              set -ex
-              yum install -y python3 python3-pip
-              mkdir -p /layer/python/lib/python3.9/site-packages
-              pip3 install --target=/layer/python/lib/python3.9/site-packages Pillow pytesseract
-            "
-
-          cd pytesseract-layer
-          zip -r ../pytesseract-layer.zip .
-          cd ..
-
       - name: Create deployment packages
         run: |
           cd lambda
@@ -104,30 +39,115 @@ jobs:
             rm -rf package
             mkdir -p package
 
-            # Install dependencies for the function
-            pip install --target ./package \
-                --platform manylinux2014_x86_64 \
-                --implementation cp \
-                --python-version 3.9 \
-                --only-binary=:all: \
-                openai
+            # Install dependencies with platform-specific binaries
+            if [ "$func" = "extract" ]; then
+              pip install --target ./package \
+                  --platform manylinux2014_x86_64 \
+                  --implementation cp \
+                  --python-version 3.9 \
+                  --only-binary=:all: \
+                  pillow pytesseract
+            else
+              pip install --target ./package \
+                  openai
+            fi
 
             # Copy source file
             cp src/$func.py package/$func.py
 
             # Create zip file with correct name
             cd package
-            zip -r ../function.zip .
+            if [ "$func" = "extract" ]; then
+              zip -r ../function.zip .
+            else
+              zip -r ../${func}_function.zip .
+            fi
             cd ..
 
             echo "Created zip file for $func"
             ls -lh *.zip
           done
 
+      - name: Create Tesseract layer
+        run: |
+          cd lambda
+          rm -rf lambda-layer
+          mkdir -p lambda-layer
+
+          docker run --rm -v $(pwd)/lambda-layer:/layer amazonlinux:2 \
+            bash -c "
+              set -ex
+              
+              echo '=== SYSTEM SETUP ==='
+              amazon-linux-extras install epel -y
+              yum clean all
+              yum makecache
+              yum update -y
+              
+              echo '=== INSTALLING PACKAGES ==='
+              yum install -y which
+              yum list available | grep tesseract
+              yum install -y tesseract
+              yum install -y libstdc++ libgomp libtiff libpng libjpeg leptonica
+              
+              echo '=== TESSERACT INSTALLATION INFO ==='
+              command -v tesseract
+              tesseract --version
+              
+              echo '=== PACKAGE FILES ==='
+              rpm -ql tesseract
+              
+              echo '=== COPYING FILES ==='
+              # Copy tesseract binary and verify
+              mkdir -p /layer/bin
+              cp -v /usr/bin/tesseract /layer/bin/
+              chmod 755 /layer/bin/tesseract
+              ls -l /layer/bin/tesseract
+
+              # Copy tessdata files
+              mkdir -p /layer/lib/tessdata
+              cp -rv /usr/share/tesseract/tessdata/* /layer/lib/tessdata/
+              ls -l /layer/lib/tessdata/
+              
+              echo '=== COPYING LIBRARIES ==='
+              # Copy all required libraries
+              ldd /usr/bin/tesseract \
+                | grep -oP '/.*\.so[^ ]*' \
+                | xargs -I{} cp -v {} /layer/lib/
+              
+              echo '=== VERIFYING LAYER CONTENTS ==='
+              find /layer -type f -ls
+              
+              echo '=== TESTING TESSERACT ==='
+              LD_LIBRARY_PATH=/layer/lib TESSDATA_PREFIX=/layer/lib/tessdata /layer/bin/tesseract --version
+            "
+          
+          echo '=== FINAL LAYER CONTENTS ==='
+          find lambda-layer -type f -ls
+          
+          echo '=== LAYER CONTENTS BEFORE ZIP ==='
+          echo "== Full layer directory structure =="
+          find lambda-layer -type f -ls
+          
+          echo "== Verifying critical files =="
+          ls -l lambda-layer/bin/tesseract
+          ls -l lambda-layer/lib/tessdata/eng.traineddata
+          
+          cd lambda-layer
+          zip -r ../tesseract-layer.zip .
+          cd ..
+          
+          echo '=== VERIFYING ZIP CONTENTS ==='
+          unzip -l tesseract-layer.zip | grep -E "bin/tesseract|lib/tessdata"
+
       - name: Terraform Init
         run: |
           cd lambda/infrastructure
           terraform init -upgrade
+
+      - name: Select Terraform Workspace
+        run: |
+          cd lambda/infrastructure
           terraform workspace select prod || terraform workspace new prod
 
       - name: Terraform Plan
@@ -136,11 +156,11 @@ jobs:
           cd lambda/infrastructure
           terraform plan -out=tfplan \
             -var="openai_api_key=${{ secrets.OPENAI_API_KEY }}"
+        continue-on-error: true
 
       - name: Check Terraform Plan Exit Code
         run: |
-          cd lambda/infrastructure
-          if [ -s tfplan ]; then
+          if [ -s lambda/infrastructure/tfplan ]; then
             echo "Terraform plan succeeded with changes."
             echo "apply_plan=true" >> $GITHUB_ENV
           else

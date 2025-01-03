@@ -1,7 +1,7 @@
 import json
 import base64
 import pytesseract
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image, ImageFilter  # Remove Resampling
 import io
 import os
 
@@ -9,42 +9,28 @@ import os
 def preprocess_image(image_bytes):
     """
     Preprocess the image for better OCR results.
-
-    Steps:
-    1. Convert to grayscale (PIL)
-    2. Contrast enhancement
-    3. Resize to enlarge text details
-    4. Apply mild blur (optional)
+    - Converts to grayscale
+    - Resizes for better clarity
+    - Applies Gaussian blur to remove noise
     """
-    # --- Load image into PIL ---
-    pil_img = Image.open(io.BytesIO(image_bytes)).convert('L')
-
-    # --- Increase contrast slightly ---
-    enhancer = ImageEnhance.Contrast(pil_img)
-    # Tweak factor (e.g. 1.5, 2.0, 2.5) to see what works best
-    pil_img = enhancer.enhance(2.0)
-
-    # --- Resize (double the size) with LANCZOS ---
-    pil_img = pil_img.resize(
-        (pil_img.width * 2, pil_img.height * 2),
-        Image.LANCZOS
+    image = Image.open(io.BytesIO(image_bytes))
+    # Convert to grayscale
+    image = image.convert('L')
+    # Resize to double the original size, using LANCZOS
+    image = image.resize(
+        (image.width * 2, image.height * 2),
+        Image.LANCZOS  # Works in older Pillow versions
     )
-
-    # --- Apply mild blur (optional) ---
-    pil_img = pil_img.filter(ImageFilter.GaussianBlur(radius=0.5))
-
-    return pil_img
+    # Apply Gaussian blur for noise reduction
+    image = image.filter(ImageFilter.GaussianBlur(radius=1))
+    return image
 
 
 def lambda_handler(event, context):
-    """
-    AWS Lambda handler to extract text from an image using Tesseract OCR.
-    """
     try:
         if 'body' not in event:
             raise ValueError("No body in event")
 
-        # Parse the body
         body = json.loads(event['body']) if isinstance(
             event['body'], str) else event['body']
 
@@ -55,11 +41,9 @@ def lambda_handler(event, context):
         if len(image_parts) != 2:
             raise ValueError("Invalid image data format")
 
-        # Decode base64 image data
         image_data = image_parts[1]
         image_bytes = base64.b64decode(image_data)
 
-        # Preprocess the image
         processed_image = preprocess_image(image_bytes)
 
         # Configure Tesseract environment
@@ -67,7 +51,6 @@ def lambda_handler(event, context):
         os.environ['TESSDATA_PREFIX'] = '/opt/lib/tessdata'
         pytesseract.pytesseract.tesseract_cmd = '/opt/bin/tesseract'
 
-        # Tesseract configuration
         custom_config = r'--oem 3 --psm 6'
         extracted_text = pytesseract.image_to_string(
             processed_image, config=custom_config)

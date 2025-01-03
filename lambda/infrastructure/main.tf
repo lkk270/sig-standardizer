@@ -67,7 +67,7 @@ resource "aws_lambda_function" "extract_text" {
 
 # Create Lambda function for text standardization
 resource "aws_lambda_function" "standardize_text" {
-  filename      = "../function.zip"
+  filename      = "../standardize_function.zip"
   function_name = "standardize-text"
   role         = data.aws_iam_role.existing_lambda_role.arn
   handler      = "standardize.lambda_handler"
@@ -76,7 +76,7 @@ resource "aws_lambda_function" "standardize_text" {
   memory_size  = 1024
   
   # Force update when code changes
-  source_code_hash = filebase64sha256("../function.zip")
+  source_code_hash = filebase64sha256("../standardize_function.zip")
 
   environment {
     variables = {
