@@ -21,7 +21,7 @@ def preprocess_image(image_bytes):
     new_height = int(image.height * 1.25)
     image = image.resize((new_width, new_height), Image.LANCZOS)
     # Apply Gaussian blur for noise reduction
-    image = image.filter(ImageFilter.GaussianBlur(radius=1))
+    image = image.filter(ImageFilter.GaussianBlur(radius=0.5))
     return image
 
 
