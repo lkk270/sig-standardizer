@@ -1,7 +1,7 @@
 import json
 import base64
 import pytesseract
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, Resampling  # <-- import Resampling
 import io
 import os
 
@@ -17,7 +17,10 @@ def preprocess_image(image_bytes):
     # Convert to grayscale
     image = image.convert('L')
     # Resize to double the original size
-    image = image.resize((image.width * 2, image.height * 2), Image.ANTIALIAS)
+    image = image.resize(
+        (image.width * 2, image.height * 2),
+        Resampling.LANCZOS  # <-- use Resampling.LANCZOS instead of Image.ANTIALIAS
+    )
     # Apply Gaussian blur for noise reduction
     image = image.filter(ImageFilter.GaussianBlur(radius=1))
     return image
@@ -60,7 +63,8 @@ def lambda_handler(event, context):
         print("Step 8: Calling pytesseract.image_to_string")
         custom_config = r'--oem 3 --psm 6'
         extracted_text = pytesseract.image_to_string(
-            processed_image, config=custom_config)
+            processed_image, config=custom_config
+        )
 
         print("Step 9: Returning OCR result")
         return {
