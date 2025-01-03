@@ -76,6 +76,32 @@ def lambda_handler(event, context):
                 'status': 'success'
             })
         }
+    except openai.error.InvalidRequestError as e:
+        logger.error(f"OpenAI API Invalid Request Error: {e}")
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'error': f"OpenAI API Invalid Request Error: {e}",
+                'status': 'error'
+            })
+        }
+    except openai.error.AuthenticationError as e:
+        logger.error(f"OpenAI API Authentication Error: {e}")
+        return {
+            'statusCode': 401,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'error': f"OpenAI API Authentication Error: {e}",
+                'status': 'error'
+            })
+        }
     except openai.error.OpenAIError as e:
         logger.error(f"OpenAI API Error: {e}")
         return {
