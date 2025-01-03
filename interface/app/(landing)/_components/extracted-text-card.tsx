@@ -1,12 +1,12 @@
 "use client";
 import { Card } from "@/components/ui/card";
-import { useExtractedText } from "@/hooks/use-extracted-text";
-import { useIsLoading } from "@/hooks/use-is-loading";
+import { useTextProcessing } from "@/hooks/use-text-processing";
 import Skeleton from "@/components/reusable/skeleton";
 
 const ExtractedTextCard = () => {
-	const { extractedText } = useExtractedText();
-	const { isLoading } = useIsLoading();
+	const { extractedText, status } = useTextProcessing();
+	const isLoading = status === "extracting";
+
 	return (
 		<Card className="p-4">
 			<h3 className="font-bold mb-2">Extracted Text</h3>

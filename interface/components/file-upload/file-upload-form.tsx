@@ -12,17 +12,15 @@ import { Dropzone } from "@/components/file-upload/dropzone";
 import { FileWithStatus } from "@/app/types";
 import { Spinner } from "@/components/reusable/spinner";
 import { cn, formatFileSize } from "@/lib/utils";
-// import { Separator } from "@/components/ui/separator";
-import { useIsLoading } from "@/hooks/use-is-loading";
 import { Button } from "@/components/ui/button";
 import { extractText } from "@/app/(landing)/actions/extract-text";
-import { useExtractedText } from "@/hooks/use-extracted-text";
+import { standardizeText } from "@/app/(landing)/actions/standardize";
+import { useTextProcessing } from "@/hooks/use-text-processing";
 
 export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
-	const { isLoading, setIsLoading } = useIsLoading();
-	const { setExtractedText } = useExtractedText();
-	// const [isPending, startTransition] = useTransition();
+	const { status, setStatus, setError, setExtractedText, setStandardizedText } =
+		useTextProcessing();
 
 	const updateFileStatus = (
 		status: "uploaded" | "error" | "canceled" | "uploading" | "gotPSU"
@@ -33,11 +31,11 @@ export const FileUploadForm = () => {
 	};
 
 	const handleUpload = async () => {
-		if (isLoading || !file) return;
-
-		setIsLoading(true);
+		if (status === "extracting" || status === "standardizing" || !file) return;
 
 		try {
+			setStatus("extracting");
+
 			// Convert file to Base64
 			const base64 = await new Promise<string>((resolve, reject) => {
 				const reader = new FileReader();
@@ -47,17 +45,27 @@ export const FileUploadForm = () => {
 			});
 
 			// Call extractText using the Base64 string
-			const result = await extractText(base64);
-			if (!result.success) {
-				throw new Error(result.error);
+			const extractResult = await extractText(base64);
+			if (!extractResult.success) {
+				throw new Error(extractResult.error);
 			}
-			setExtractedText(result.text || "");
+			setExtractedText(extractResult.text || "");
 			updateFileStatus("uploaded");
+
+			// Now standardize the extracted text
+			setStatus("standardizing");
+			const standardizeResult = await standardizeText(extractResult.text || "");
+			if (!standardizeResult.success) {
+				throw new Error(standardizeResult.error);
+			}
+
+			setStandardizedText(standardizeResult.text || "");
+			setStatus("completed");
 		} catch (error) {
 			console.error("Error:", error);
+			setError(error instanceof Error ? error.message : "Unknown error");
+			setStatus("error");
 			updateFileStatus("error");
-		} finally {
-			setIsLoading(false);
 		}
 	};
 
@@ -147,7 +155,12 @@ export const FileUploadForm = () => {
 
 					<CardFooter className="pt-4 justify-end">
 						<Button
-							disabled={isLoading || !file || file.status === "uploaded"}
+							disabled={
+								status === "extracting" ||
+								status === "standardizing" ||
+								!file ||
+								file.status === "uploaded"
+							}
 							onClick={() => handleUpload()}
 							className="w-20 h-8 text-sm"
 						>
