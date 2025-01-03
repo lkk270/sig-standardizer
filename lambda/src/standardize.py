@@ -15,25 +15,33 @@ def lambda_handler(event, context):
 
         # Log all environment variables (excluding sensitive values)
         logger.info("Environment variables present:")
-        for key in os.environ:
-            logger.info(
-                f"- {key}: {'[MASKED]' if 'KEY' in key.upper() else os.environ[key]}")
+        for key, value in os.environ.items():
+            masked_value = "[MASKED]" if "KEY" in key.upper() else value
+            logger.info(f"- {key}: {masked_value}")
 
         # Parse the request body
-        body = json.loads(event['body'])
-        text = body['text']
+        try:
+            body = json.loads(event.get('body', '{}'))
+            text = body.get('text')
+            if not text:
+                raise ValueError("Request body must contain 'text' key")
+        except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in request body", exc_info=True)
+            raise ValueError("Invalid JSON in request body") from e
 
         # Validate OpenAI API Key
         api_key = os.environ.get('OPENAI_API_KEY')
-        logger.info(f"OpenAI API key present: {api_key is not None}")
         if not api_key:
+            logger.error(
+                "OpenAI API key is missing from environment variables")
             raise ValueError(
                 "OpenAI API key not found in environment variables")
 
-        # Call OpenAI API
         openai.api_key = api_key
-        logger.info("Making request to OpenAI API")
+        logger.info("OpenAI API key validated successfully")
 
+        # Call OpenAI API
+        logger.info("Making request to OpenAI API")
         response = openai.ChatCompletion.create(
             model="gpt-4o-2024-11-20",
             messages=[
@@ -53,9 +61,9 @@ def lambda_handler(event, context):
             logger.info("Successfully parsed OpenAI response into JSON")
         except json.JSONDecodeError as e:
             logger.error(
-                "Error parsing OpenAI response into JSON, specific error: " + str(e), exc_info=True)
+                "Error parsing OpenAI response into JSON", exc_info=True)
             raise ValueError(
-                "OpenAI API key not found in environment variables") from None
+                "Failed to parse OpenAI response into JSON") from e
 
         return {
             'statusCode': 200,
@@ -69,7 +77,7 @@ def lambda_handler(event, context):
             })
         }
     except openai.error.OpenAIError as e:
-        logger.error(f"OpenAI API Error: {str(e)}")
+        logger.error(f"OpenAI API Error: {e}")
         return {
             'statusCode': 500,
             'headers': {
@@ -77,20 +85,33 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'error': f"OpenAI API Error: {str(e)}",
+                'error': f"OpenAI API Error: {e}",
                 'status': 'error'
             })
         }
-    except Exception as e:
-        logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+    except ValueError as e:
+        logger.error(f"Value error: {e}")
         return {
-            'statusCode': 500,
+            'statusCode': 400,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
                 'error': str(e),
+                'status': 'error'
+            })
+        }
+    except Exception:
+        logger.error("Unexpected error occurred", exc_info=True)
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({
+                'error': "An unexpected error occurred. Please check the logs.",
                 'status': 'error'
             })
         }
