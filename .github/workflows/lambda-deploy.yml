@@ -103,15 +103,18 @@ jobs:
               cp -v /usr/bin/tesseract /layer/opt/lib/
               chmod 755 /layer/opt/lib/tesseract
               
-              # Find and copy tessdata
-              find /usr -name tessdata -type d -exec cp -rv {}/* /layer/opt/lib/tessdata/ \;
+              # Create tessdata directory and copy files
+              mkdir -p /layer/opt/lib/tessdata
+              cp -rv /usr/share/tesseract/tessdata/* /layer/opt/lib/tessdata/ || echo "No tessdata files found"
               
               echo '=== COPYING LIBRARIES ==='
               # Copy all required libraries
               ldd /usr/bin/tesseract | while read -r line; do
-                if [[ \$line =~ => ]]; then
-                  lib=\$(echo \$line | awk '{print \$3}')
-                  cp -v \$lib /layer/opt/lib/
+                if [[ "$line" == *"=>"* ]]; then
+                  lib=$(echo "$line" | awk '{print $3}')
+                  if [ -f "$lib" ]; then
+                    cp -v "$lib" /layer/opt/lib/
+                  fi
                 fi
               done
               
