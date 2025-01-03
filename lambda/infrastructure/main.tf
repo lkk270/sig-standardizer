@@ -47,7 +47,8 @@ resource "aws_lambda_function" "extract_text" {
   source_code_hash = filebase64sha256("../function.zip")
 
   layers = [
-    aws_lambda_layer_version.tesseract.arn
+    aws_lambda_layer_version.tesseract.arn,
+    aws_lambda_layer_version.opencv_layer.arn
   ]
 
   tags = {

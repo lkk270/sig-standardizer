@@ -59,14 +59,10 @@ jobs:
               rm -rf /usr/share/fonts/*
 
               # Create the tessdata directory in the layer
-              mkdir -p /layer/python/lib/python3.9/site-packages
-              pip3 install --target=/layer/python/lib/python3.9/site-packages opencv-python-headless pytesseract Pillow
+              mkdir -p /layer/lib/tessdata
 
               # Download English language data
               curl -L https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata -o /usr/share/tesseract/tessdata/eng.traineddata
-
-              # Create the tessdata directory in the layer
-              mkdir -p /layer/lib/tessdata
 
               # Remove everything except eng.traineddata in /usr/share/tesseract/tessdata
               find /usr/share/tesseract/tessdata -type f -name '*.traineddata' ! -name 'eng.traineddata' -exec rm {} \;
@@ -91,7 +87,7 @@ jobs:
               set -ex
               yum install -y python3 python3-pip
               mkdir -p /layer/python/lib/python3.9/site-packages
-              pip3 install --target=/layer/python/lib/python3.9/site-packages opencv-python-headless pytesseract Pillow
+              pip3 install --target=/layer/python/lib/python3.9/site-packages opencv-python-headless Pillow pytesseract
             "
 
           cd opencv-layer
