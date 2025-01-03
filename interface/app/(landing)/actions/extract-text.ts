@@ -24,9 +24,7 @@ export async function extractText(
 			}),
 		});
 
-
 		if (!response.ok) {
-			const errorText = await response.text();
 			return {
 				success: false,
 				error: `HTTP error! status: ${response.status}`,
