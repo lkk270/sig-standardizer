@@ -10,9 +10,18 @@ export async function extractText(
 	imageData: string
 ): Promise<ExtractTextResponse> {
 	try {
-		// Debug logging
-		console.log("Lambda URL:", process.env.NEXT_PUBLIC_LAMBDA_URL);
-		console.log("Image data length:", imageData?.length);
+		// Debug logging for server
+		console.log("[Server] Starting text extraction");
+		console.log(
+			"[Server] Lambda URL configured:",
+			!!process.env.NEXT_PUBLIC_LAMBDA_URL
+		);
+		console.log(
+			"[Server] Image data received:",
+			!!imageData,
+			"length:",
+			imageData?.length
+		);
 
 		if (!process.env.NEXT_PUBLIC_LAMBDA_URL) {
 			throw new Error("Lambda URL is not configured");
@@ -29,11 +38,18 @@ export async function extractText(
 		});
 
 		// Debug response
-		console.log("Response status:", response.status);
-		console.log("Response headers:", Object.fromEntries(response.headers));
+		console.log("[Server] Response received:", {
+			status: response.status,
+			ok: response.ok,
+			headers: Object.fromEntries(response.headers),
+		});
 
 		if (!response.ok) {
-			console.error("Response error:", response);
+			const errorText = await response.text();
+			console.error("[Server] Response error:", {
+				status: response.status,
+				body: errorText,
+			});
 			return {
 				success: false,
 				error: `HTTP error! status: ${response.status}`,
@@ -41,21 +57,14 @@ export async function extractText(
 		}
 
 		const data = await response.json();
-		console.log("Response data:", data);
-
-		if (data.status === "error") {
-			return {
-				success: false,
-				error: data.error || "Unknown error occurred",
-			};
-		}
+		console.log("[Server] Response data:", data);
 
 		return {
 			success: true,
 			text: data.text,
 		};
 	} catch (error) {
-		console.error("Error details:", {
+		console.error("[Server] Error details:", {
 			name: error instanceof Error ? error.name : "Unknown",
 			message: error instanceof Error ? error.message : String(error),
 			stack: error instanceof Error ? error.stack : undefined,
