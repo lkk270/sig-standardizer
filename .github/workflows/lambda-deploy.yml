@@ -136,6 +136,10 @@ jobs:
           
           cd lambda-layer
           zip -r ../tesseract-layer.zip .
+          cd ..
+          
+          echo '=== VERIFYING ZIP CONTENTS ==='
+          unzip -l tesseract-layer.zip | grep -E "opt/bin/tesseract|opt/lib/tessdata"
 
       - name: Terraform Init
         run: |
