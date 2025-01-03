@@ -23,30 +23,39 @@ def lambda_handler(event, context):
         body = json.loads(event['body'])
         text = body['text']
 
-        # Log OpenAI API key presence (not the key itself)
+        # Validate OpenAI API Key
         api_key = os.environ.get('OPENAI_API_KEY')
         logger.info(f"OpenAI API key present: {api_key is not None}")
-        logger.info(f"OpenAI API key length: {len(api_key) if api_key else 0}")
-
         if not api_key:
             raise ValueError(
                 "OpenAI API key not found in environment variables")
 
-        logger.info("Initializing OpenAI client")
-        client = openai.OpenAI(api_key=api_key)
-
+        # Call OpenAI API
+        openai.api_key = api_key
         logger.info("Making request to OpenAI API")
-        response = client.chat.completions.create(
+
+        response = openai.ChatCompletion.create(
             model="gpt-4o-2024-11-20",
             messages=[
                 {"role": "system",
-                 "content": "You are a medical assistant tasked with extracting structured SIG codes from unstructured text. SIG codes standardize medication instructions, specifying name, dosage, frequency, quantity, refills, and purpose (if available). Your task is to process the input text, ignore irrelevant information (like names, addresses, and other unrelated details), and output the SIG codes clearly and consistently. Use this format for each SIG code:\n\n[Medication Name]: Take [dosage] [frequency] for [purpose, if available]. Quantity: [quantity]. Refills: [number of refills or 'None'].\n\nIgnore any irrelevant data."},
+                 "content": "You are a medical assistant tasked with extracting structured SIG codes from unstructured text. For each medication, output a JSON object with these fields: medication, sig_code, dosage, frequency, quantity, refills, purpose (if available)."},
                 {"role": "user", "content": text}
             ]
         )
 
-        standardized_text = response.choices[0].message.content
-        logger.info("Successfully received response from OpenAI")
+        # Process the response
+        raw_response = response['choices'][0]['message']['content']
+        logger.info(f"Raw response from OpenAI: {raw_response}")
+
+        # Convert the output to JSON
+        try:
+            medications = json.loads(raw_response)
+            logger.info("Successfully parsed OpenAI response into JSON")
+        except json.JSONDecodeError as e:
+            logger.error(
+                "Error parsing OpenAI response into JSON, specific error: " + str(e), exc_info=True)
+            raise ValueError(
+                "OpenAI API key not found in environment variables") from None
 
         return {
             'statusCode': 200,
@@ -55,11 +64,11 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({
-                'text': standardized_text,
+                'medications': medications,
                 'status': 'success'
             })
         }
-    except openai.APIError as e:
+    except openai.error.OpenAIError as e:
         logger.error(f"OpenAI API Error: {str(e)}")
         return {
             'statusCode': 500,
