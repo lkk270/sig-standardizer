@@ -79,7 +79,8 @@ def lambda_handler(event, context):
         # Process the response
         try:
             response_text = response.choices[0].message.content.strip()
-            standardized_text = json.loads(response_text)
+            medications_array = json.loads(response_text)
+            standardized_text = {"medications": medications_array}
             logger.info(
                 "Successfully received and parsed response from OpenAI")
         except json.JSONDecodeError as e:
