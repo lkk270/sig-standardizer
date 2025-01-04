@@ -46,40 +46,31 @@ def lambda_handler(event, context):
                 {
                     "role": "system",
                     "content": """You are a medical assistant tasked with extracting structured medication information and generating SIG codes.
-For each medication, provide a JSON object with the following fields:
-- medication: The name of the medication
-- sig_code: The standardized SIG code (e.g., "1 tab PO QD" for "Take 1 tablet by mouth daily")
-- dosage: The medication dosage (e.g., "500 mg")
-- frequency: How often to take the medication (e.g., "every 8 hours", "once daily")
-- quantity: The total amount prescribed (e.g., "30 tablets")
-- refills: Number of refills or "None"
-- purpose: The purpose of the medication if specified, or null if not provided
+                        For each medication, provide a **strictly valid JSON** array of objects. Do not include any additional text, explanations, or comments.
+                        The output must start with '[' and end with ']', containing only the JSON array.
 
-Format the output as a valid JSON array of objects, with no additional text. Example:
-{
-    "medications": [
-        {
-            "medication": "Amoxicillin",
-            "sig_code": "1 CAP PO Q8H",
-            "dosage": "500 mg",
-            "frequency": "every 8 hours",
-            "quantity": "30 capsules",
-            "refills": "None",
-            "purpose": null
-        }
-    ]
-}
+                        Each object in the array should have the following fields:
+                        - medication: The name of the medication
+                        - sig_code: The standardized SIG code
+                        - dosage: The medication dosage
+                        - frequency: How often to take the medication
+                        - quantity: The total amount prescribed
+                        - refills: Number of refills or "None"
+                        - purpose: The purpose of the medication if specified, or null if not provided.
 
-Use standard medical abbreviations in the sig_code:
-- PO: by mouth
-- QD: once daily
-- BID: twice daily
-- TID: three times daily
-- QID: four times daily
-- Q#H: every # hours
-- PRN: as needed
-- TAB: tablet
-- CAP: capsule"""
+                        Example output:
+                        [
+                            {
+                                "medication": "Amoxicillin",
+                                "sig_code": "1 CAP PO Q8H",
+                                "dosage": "500 mg",
+                                "frequency": "every 8 hours",
+                                "quantity": "30 capsules",
+                                "refills": "None",
+                                "purpose": null
+                            }
+                        ]
+                        """,
                 },
                 {"role": "user", "content": text}
             ]
