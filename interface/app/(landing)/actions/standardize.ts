@@ -40,9 +40,16 @@ export async function standardizeText(
 		const data = await response.json();
 		console.log(data);
 
+		if (!data.text || !data.text.medications) {
+			return {
+				success: false,
+				error: "Invalid response format from standardization service",
+			};
+		}
+
 		return {
 			success: true,
-			text: data.text,
+			text: JSON.stringify(data.text),
 		};
 	} catch (error) {
 		console.error("[Server] Error details:", {
