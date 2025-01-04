@@ -1,7 +1,7 @@
 
 # NoSIG - Medical Prescription Standardization System
 
-NoSIG is a sophisticated system designed to extract and standardize medical prescription information from images using advanced OCR and AI technologies. It consists of a modern web interface built with Next.js and serverless AWS Lambda functions for processing.
+NoSIG is a simple application for extracting and standardizing medical prescription information from images. It lets users upload an image of a typed prescription (not handwritten) that lacks SIG codes. The system uses Tesseract OCR to extract the text from the image and then leverages OpenAI to standardize the text and generate the appropriate SIG codes.
 
 ---
 
