@@ -41,7 +41,7 @@ def lambda_handler(event, context):
         # Call OpenAI API
         logger.info("Making request to OpenAI API")
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="chatgpt-4o-latest",
             messages=[
                 {
                     "role": "system",
