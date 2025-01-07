@@ -10,11 +10,9 @@ export async function standardizeText(
 	extractedText: string
 ): Promise<StandardizeResponse> {
 	try {
-		console.log("IN 13");
 		if (!process.env.NEXT_PUBLIC_STANDARDIZE_LAMBDA_URL) {
 			throw new Error("Standardize Lambda URL is not configured");
 		}
-		console.log("IN 17");
 		const response = await fetch(
 			process.env.NEXT_PUBLIC_STANDARDIZE_LAMBDA_URL,
 			{
@@ -28,8 +26,6 @@ export async function standardizeText(
 			}
 		);
 
-		console.log(response);
-
 		if (!response.ok) {
 			return {
 				success: false,
@@ -38,7 +34,6 @@ export async function standardizeText(
 		}
 
 		const data = await response.json();
-		console.log(data);
 
 		if (!data.text || !data.text.medications) {
 			return {

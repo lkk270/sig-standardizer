@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { extractText } from "@/app/(landing)/actions/extract-text";
 import { standardizeText } from "@/app/(landing)/actions/standardize";
 import { useTextProcessing } from "@/hooks/use-text-processing";
+import { toast } from "sonner";
 
 export const FileUploadForm = () => {
 	const [file, setFile] = useState<FileWithStatus | null>(null);
@@ -47,37 +48,51 @@ export const FileUploadForm = () => {
 			// Call extractText using the Base64 string
 			const extractResult = await extractText(base64);
 			if (!extractResult.success) {
-				throw new Error(extractResult.error);
+				throw new Error(
+					extractResult.error || "Failed to extract text from image"
+				);
 			}
 			setExtractedText(extractResult.text || "");
 			updateFileStatus("uploaded");
 
 			// Now standardize the extracted text
 			setStatus("standardizing");
-			console.log(extractResult.text);
 			const standardizeResult = await standardizeText(extractResult.text || "");
-			console.log(standardizeResult);
 			if (!standardizeResult.success) {
-				throw new Error(standardizeResult.error);
+				throw new Error(
+					standardizeResult.error || "Failed to standardize text"
+				);
 			}
 
 			setStandardizedText(standardizeResult.text || "");
 			setStatus("completed");
+
+			toast.success("File processed successfully");
 		} catch (error) {
 			console.error("Error:", error);
-			setError(error instanceof Error ? error.message : "Unknown error");
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error occurred";
+
+			setError(errorMessage);
 			setStatus("error");
 			updateFileStatus("error");
+
+			toast.error(errorMessage);
 		}
 	};
 
 	const handleRemoveFile = () => {
 		setFile(null);
+		setStatus("idle");
+		setError(null);
 	};
 
 	const cancelUpload = () => {
 		if (file) {
 			file.controller.abort();
+			setStatus("idle");
+			updateFileStatus("canceled");
+			toast("File upload cancelled");
 		}
 	};
 
