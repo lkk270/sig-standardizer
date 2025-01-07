@@ -10,6 +10,11 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
+def is_empty_medication(med):
+    """Check if a medication object contains only null values."""
+    return all(value is None for value in med.values())
+
+
 def lambda_handler(event, context):
     try:
         # Log the incoming event
@@ -80,21 +85,61 @@ def lambda_handler(event, context):
         try:
             response_text = response.choices[0].message.content.strip()
             medications_array = json.loads(response_text)
-            standardized_text = {"medications": medications_array}
+
+            # Check if all medications are empty/null
+            if all(is_empty_medication(med) for med in medications_array):
+                logger.info("All medications contain null values")
+                return {
+                    "statusCode": 200,
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*",
+                    },
+                    "body": json.dumps({
+                        "success": False,
+                        "noMedications": True,
+                        "error": "No medications or SIG codes could be identified in the text"
+                    }),
+                }
+
+            # Filter out any completely null medications
+            valid_medications = [
+                med for med in medications_array if not is_empty_medication(med)]
+
+            if not valid_medications:
+                logger.info("No valid medications found after filtering")
+                return {
+                    "statusCode": 200,
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*",
+                    },
+                    "body": json.dumps({
+                        "success": False,
+                        "noMedications": True,
+                        "error": "No medications or SIG codes could be identified in the text"
+                    }),
+                }
+
+            standardized_text = {"medications": valid_medications}
             logger.info(
                 "Successfully received and parsed response from OpenAI")
+
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                },
+                "body": json.dumps({
+                    "success": True,
+                    "text": standardized_text
+                }),
+            }
+
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse OpenAI response as JSON: {e}")
             raise ValueError("Invalid JSON response from OpenAI") from e
-
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
-            "body": json.dumps({"text": standardized_text, "status": "success"}),
-        }
 
     except openai.APIError as e:
         logger.error(f"OpenAI API Error: {e}")

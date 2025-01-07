@@ -4,6 +4,7 @@ type ExtractTextResponse = {
 	success: boolean;
 	text?: string;
 	error?: string;
+	noContent?: boolean;
 };
 
 export async function extractText(
@@ -32,7 +33,14 @@ export async function extractText(
 		}
 
 		const data = await response.json();
-		// console.log(data);
+
+		if (!data.text || data.text.trim() === "") {
+			return {
+				success: false,
+				noContent: true,
+				error: "No text could be extracted from the image",
+			};
+		}
 
 		return {
 			success: true,
