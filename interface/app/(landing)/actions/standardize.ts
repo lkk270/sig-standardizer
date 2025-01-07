@@ -4,6 +4,7 @@ type StandardizeResponse = {
 	success: boolean;
 	text?: string;
 	error?: string;
+	noMedications?: boolean;
 };
 
 export async function standardizeText(
@@ -34,11 +35,17 @@ export async function standardizeText(
 		}
 
 		const data = await response.json();
-
-		if (!data.text || !data.text.medications) {
+		console.log(data);
+		console.log(data.text.medications);
+		if (
+			!data.text ||
+			!data.text.medications ||
+			data.text.medications.length === 0
+		) {
 			return {
 				success: false,
-				error: "Invalid response format from standardization service",
+				noMedications: true,
+				error: "No medications or SIG codes could be identified in the text",
 			};
 		}
 

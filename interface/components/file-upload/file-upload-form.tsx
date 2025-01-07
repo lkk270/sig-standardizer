@@ -48,10 +48,17 @@ export const FileUploadForm = () => {
 			// Call extractText using the Base64 string
 			const extractResult = await extractText(base64);
 			if (!extractResult.success) {
-				throw new Error(
-					extractResult.error || "Failed to extract text from image"
-				);
+				if (extractResult.noContent) {
+					toast.error("No text could be found in the image");
+					setExtractedText("");
+				} else {
+					throw new Error(
+						extractResult.error || "Failed to extract text from image"
+					);
+				}
+				return;
 			}
+
 			setExtractedText(extractResult.text || "");
 			updateFileStatus("uploaded");
 
@@ -59,14 +66,19 @@ export const FileUploadForm = () => {
 			setStatus("standardizing");
 			const standardizeResult = await standardizeText(extractResult.text || "");
 			if (!standardizeResult.success) {
-				throw new Error(
-					standardizeResult.error || "Failed to standardize text"
-				);
+				if (standardizeResult.noMedications) {
+					toast.error("No medications or SIG codes found in the text");
+					setStandardizedText("");
+				} else {
+					throw new Error(
+						standardizeResult.error || "Failed to standardize text"
+					);
+				}
+				return;
 			}
 
 			setStandardizedText(standardizeResult.text || "");
 			setStatus("completed");
-
 			toast.success("File processed successfully");
 		} catch (error) {
 			console.error("Error:", error);

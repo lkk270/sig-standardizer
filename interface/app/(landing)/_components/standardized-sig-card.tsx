@@ -111,12 +111,13 @@ const StandardizedSigCard = () => {
 		<Card className="p-4">
 			<div className="flex justify-between items-center mb-2">
 				<h3 className="font-bold">Standardized SIG</h3>
-				{standardizedText && (
+				{standardizedText && standardizedText !== "" && (
 					<Button
 						variant="outline"
 						size="sm"
 						onClick={handleDownloadCSV}
 						className="flex items-center gap-2"
+						disabled={!standardizedText || status === "error"}
 					>
 						<Download className="w-4 h-4" />
 						Download CSV
@@ -133,8 +134,10 @@ const StandardizedSigCard = () => {
 				) : standardizedText ? (
 					<div className="space-y-2">{formatSigText(standardizedText)}</div>
 				) : (
-					<p className="text-muted-foreground">
-						No standardized text available.
+					<p className="text-muted-foreground text-center">
+						{status === "error"
+							? "Unable to standardize text"
+							: "No medications or SIG codes found"}
 					</p>
 				)}
 			</div>
